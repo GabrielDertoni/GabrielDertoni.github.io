@@ -139,7 +139,7 @@ function keyPressed() {
 	if (waitKey) {
 		waitKey = false;
 		fill(25);
-		rect(0, 0, width, height)
+		rect(0, 0, width, height);
 	} else if (keyCode === 38 && direction !== 2) {
 		direction = 0;
 	} else if (keyCode === 39 && direction !== 3) {
@@ -148,5 +148,30 @@ function keyPressed() {
 		direction = 2;
 	} else if (keyCode === 37 && direction !== 1) {
 		direction = 3;
+	}
+}
+function mousePressed() {
+	if (waitKey) {
+		waitKey = false;
+		fill(25);
+		rect(0, 0, width, height);
+	} else {
+		pivotX = mouseX;
+		pivotY = mouseY;
+	}
+}
+function mouseReleased() {
+	if (abs(mouseX - pivotX) > abs(mouseY - pivotY)) {
+		if (mouseX - pivotX > 0) {
+			direction = 1;
+		} else {
+			direction = 3;
+		}
+	} else {
+		if (mouseY - pivot > 0) {
+			direction = 2;
+		} else {
+			direction = 0;
+		}
 	}
 }
