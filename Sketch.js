@@ -9,6 +9,7 @@ var speed = 10;
 var gameOverImg;
 var beam = [0, 0];
 var waitKey = false;
+var pivotX, pivotY = 0;
 
 function preload() {
 	gameOverImg = loadImage('gameOver.jpg');
@@ -162,15 +163,15 @@ function mousePressed() {
 }
 function mouseReleased() {
 	if (abs(mouseX - pivotX) > abs(mouseY - pivotY)) {
-		if (mouseX - pivotX > 0) {
+		if (mouseX - pivotX > 20) {
 			direction = 1;
-		} else {
+		} else if (mouseX - pivotX < -20) {
 			direction = 3;
 		}
 	} else {
-		if (mouseY - pivot > 0) {
+		if (mouseY - pivotY > 20) {
 			direction = 2;
-		} else {
+		} else if (mouseY - pivotY < -20) {
 			direction = 0;
 		}
 	}
