@@ -13,12 +13,14 @@ var pivotX, pivotY = 0;
 
 function preload() {
 	gameOverImg = loadImage('gameOver.jpg');
+	sound_track = loadSound('spaceinvaders.mp3');
 }
 function setup() {
 	createCanvas(900, 600);
 	gameOverImg.resize(width, height);
 	fill(25);	
 	rect(0, 0, width, height);
+	sound_track.loop();
 }
 function draw() {
 	if (game_over) {
