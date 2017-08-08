@@ -11,33 +11,57 @@ var beam = [0, 0];
 var waitKey = false;
 var pivotX, pivotY = 0;
 
-function preload() {
-	gameOverImg = loadImage('gameOver.jpg');
-	sound_track = loadSound('spaceinvaders.mp3');
-}
 function setup() {
-	createCanvas(900, 600);
-	gameOverImg.resize(width, height);
-	fill(25);	
-	rect(0, 0, width, height);
-	sound_track.loop();
+	sound_track = loadSound("spaceinvaders.mp3", play_soundtrack);
+	main_div = document.getElementById("canvas-container");
+	Width = main_div.offsetWidth;
+	Height = main_div.offsetHeight;
+	if (Width % grid !== 0) {
+		Width -= Width % grid;
+	}
+	if (Height % grid !== 0) {
+		Height -= Height % grid;
+	}
+	canvas = createCanvas(Width, Height);
+	canvas.parent("canvas-container");
+	// gameOverImg.resize(Width, Height);
+	fill(25);
+	rect(0, 0, Width, Height);
 }
 function draw() {
+	if (abs(Width - main_div.offsetWidth) > (grid * 2) || abs(Height - main_div.offsetHeight) > (grid * 2)) {
+		Width = main_div.offsetWidth;
+		Height = main_div.offsetHeight;
+		if (Width % grid !== 0) {
+			Width -= Width % grid;
+		}
+		if (Height % grid !== 0) {
+			Height -= Height % grid;
+		}
+		resizeCanvas(Width, Height);
+		background(25);
+	}
 	if (game_over) {
 		gameOver();
 	} else if (waitKey) {
 		textAlign(CENTER);
+		textSize(60);
+		fill(25);
+		var tw1 = textWidth("Game Over!");
+		rect(Width / 2 - tw1 / 2, Height / 2 - 100, tw1, 100);
+		fill(255);
+		text("Game Over!", Width / 2, Height / 2);
 		textSize(30);
-		fill(0);
-		var tw = textWidth("Press any key to continue...");
-		rect(width / 2 - tw / 2, 450, tw, 70);
+		fill(25);
+		var tw2 = textWidth("Press any key to continue...");
+		rect(Width / 2 - tw2 / 2, 450, tw2, 70);
 		if (frameCount % 80 < 40) {
 			fill(255);
-			text("Press any key to continue...", width / 2, 500);
+			text("Press any key to continue...", Width / 2, 500);
 		}
 	} else {
 		fill(25, 5);
-		rect(0, 0, width, height);
+		rect(0, 0, Width, Height);
 		var eaten = undefined;
 		noStroke();
 		for (var i = 0; i < food.length; i++) {
@@ -55,11 +79,11 @@ function draw() {
 					position[1]--;
 				}
 			} else if (direction === 1) {
-				if ((position[0] + 1) * grid < width) {
+				if ((position[0] + 1) * grid < Width) {
 					position[0]++;
 				}
 			} else if (direction === 2) {
-				if ((position[1] + 1) * grid < height) {
+				if ((position[1] + 1) * grid < Height) {
 					position[1]++;
 				}
 			} else {
@@ -72,7 +96,7 @@ function draw() {
 					snake[i] = position;
 				} else {
 					snake[i] = snake[i - 1];
-					if (snake[i - 1][0] === position[0] && 
+					if (snake[i - 1][0] === position[0] &&
 					    snake[i - 1][1] === position[1]) {
 						game_over = true;
 					}
@@ -87,12 +111,9 @@ function draw() {
 					}
 				}
 			}
-			if (game_over) {
-				gameOver();
-			}
 		}
 		if (food.length === 0) {
-			food.push([int(random(width / grid)), int(random(height / grid))]);
+			food.push([int(random(Width / grid)), int(random(Height / grid))]);
 		}
 		textAlign(CORNER);
 		textSize(20);
@@ -103,46 +124,20 @@ function draw() {
 	}
 }
 function gameOver() {
-	var beamW = 50;
-	if (beam[0] < width || beam[1] < height) {
-		r(beam, beamW);
-		if (beam[0] >= width) {
-			beam[0] = 0;
-			beam[1] += beamW;
-		} else {
-			beam[0] += beamW;
-		}
-	} else {
-		snake = [[1, 0], [0, 0]];
-		direction = 1;
-		waitKey = true;
-		game_over = false;
-		points = 0;
-		beam = [0, 0];
-	}
-}
-function r(beam, beamW) {
-	loadPixels();
-	gameOverImg.loadPixels();
-	for (var i = 0; i < beamW; i++) {
-		for (var j = 0; j < beamW; j++) {
-			pixels[((beam[1] + i) * width + (beam[0] + j)) * 4] = 
-				gameOverImg.pixels[((beam[1] + i) * width + (beam[0] + j)) * 4];
-			pixels[((beam[1] + i) * width + (beam[0] + j)) * 4 + 1] =
-				gameOverImg.pixels[((beam[1] + i) * width + (beam[0] + j)) * 4 + 1];
-			pixels[((beam[1] + i) * width + (beam[0] + j)) * 4 + 2] =
-				gameOverImg.pixels[((beam[1] + i) * width + (beam[0] + j)) * 4 + 2];
-			pixels[((beam[1] + i) * width + (beam[0] + j)) * 4 + 3] =
-				gameOverImg.pixels[((beam[1] + i) * width + (beam[0] + j)) * 4 + 3];
-		}
-	}
-	updatePixels();
+	snake = [[11, 10], [10, 10]];
+	direction = 1;
+	waitKey = true;
+	game_over = false;
+	points = 0;
+	beam = [0, 0];
+	fill(25);
+	rect(0, 0, Width, Height);
 }
 function keyPressed() {
 	if (waitKey) {
 		waitKey = false;
 		fill(25);
-		rect(0, 0, width, height);
+		rect(0, 0, Width, Height);
 	} else if (keyCode === 38 && direction !== 2) {
 		direction = 0;
 	} else if (keyCode === 39 && direction !== 3) {
@@ -157,7 +152,7 @@ function mousePressed() {
 	if (waitKey) {
 		waitKey = false;
 		fill(25);
-		rect(0, 0, width, height);
+		rect(0, 0, Width, Height);
 	} else {
 		pivotX = mouseX;
 		pivotY = mouseY;
@@ -177,4 +172,7 @@ function mouseReleased() {
 			direction = 0;
 		}
 	}
+}
+function play_soundtrack () {
+	sound_track.loop();
 }
