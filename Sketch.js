@@ -79,7 +79,7 @@ function draw() {
 				fill(255);
 				rect(snake[i][0] * grid, snake[i][1] * grid, grid, grid);
 			}
-			if (frameCount % (frameRate() / speed) === 0) {
+			if (frameCount % (frame_rate / speed) === 0) {
 				var position = snake[0].slice();
 				if (direction === 0) {
 					if ((position[1] + 1) * grid > grid) {
