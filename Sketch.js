@@ -184,14 +184,15 @@ function while_loading (p) {
 	fill(25);
 	rect(0, 0, Width, Height);
 	textAlign(CENTER);
+	textSize(50);
 	fill(255);
 	text("Loading...", Width / 2, Height / 2 - 70);
 	noFill();
 	stroke(255);
-	rect(Width / 2 - 200, Height / 2 - 25, 200, 50);
+	rect(Width / 2 - 200, Height / 2 - 25, 400, 50);
 	noStroke();
 	fill(255);
-	rect(Width / 2 - 200, Height / 2 - 25, 200 * p, 50);
+	rect(Width / 2 - 200, Height / 2 - 25, 400 * p, 50);
 }
 function error_loading () {
 	
