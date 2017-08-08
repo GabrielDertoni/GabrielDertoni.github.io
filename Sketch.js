@@ -11,6 +11,7 @@ var beam = [0, 0];
 var waitKey = false;
 var pivotX, pivotY = 0;
 var loaded = false;
+var frame_rate = 30;
 
 function setup() {
 	sound_track = loadSound("spaceinvaders.mp3", play_soundtrack, error_loading, while_loading);
@@ -28,8 +29,12 @@ function setup() {
 	// gameOverImg.resize(Width, Height);
 	fill(25);
 	rect(0, 0, Width, Height);
+	frameRate(frame_rate);
 }
 function draw() {
+	if (abs(frameRate() - frame_rate) > 10) {
+		frame_rate = int(frameRate() - (frameRate() % 10))
+	}
 	if (abs(Width - main_div.offsetWidth) > (grid * 2) || abs(Height - main_div.offsetHeight) > (grid * 2)) {
 		Width = main_div.offsetWidth;
 		Height = main_div.offsetHeight;
