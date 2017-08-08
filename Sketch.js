@@ -124,9 +124,6 @@ function draw() {
 			fill(255);
 			text("Points: " + points.toString(), 50, 50);
 		}
-	} else {
-		fill(25);
-		rect(0, 0, Width, Height);
 	}
 }
 function gameOver() {
@@ -184,6 +181,8 @@ function play_soundtrack () {
 	loaded = true;
 }
 function while_loading (p) {
+	fill(25);
+	rect(0, 0, Width, Height);
 	textAlign(CENTER);
 	text("Loading...", Width / 2, Height / 2 - 70);
 	noFill();
