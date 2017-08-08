@@ -150,6 +150,7 @@ function keyPressed() {
 	} else if (keyCode === 37 && direction !== 1) {
 		direction = 3;
 	}
+	return false;
 }
 function mousePressed() {
 	if (waitKey) {
@@ -160,6 +161,7 @@ function mousePressed() {
 		pivotX = mouseX;
 		pivotY = mouseY;
 	}
+	return false;
 }
 function mouseReleased() {
 	if (abs(mouseX - pivotX) > abs(mouseY - pivotY)) {
