@@ -184,7 +184,9 @@ function play_soundtrack () {
 	loaded = true;
 }
 function while_loading (p) {
-	nofill();
+	textAlign(CENTER);
+	text("Loading...", Width / 2, Height / 2 - 70);
+	noFill();
 	stroke(255);
 	rect(Width / 2 - 200, Height / 2 - 25, 200, 50);
 	noStroke();
