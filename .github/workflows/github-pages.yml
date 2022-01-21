@@ -12,6 +12,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Install pandoc
+        run: docker pull pandoc/minimal:latest
+
       - uses: actions/checkout@v2
         with:
           submodules: true
@@ -19,7 +22,10 @@ jobs:
 
       - name: Build
         working-directory: ./blog
-        run: make
+        # Will run pandoc in a docker image. This is better than installing it
+        # with `apt` (automatically done by the Makefile) because the version
+        # available in the apt repository is older.
+        run: make PANDOC="docker run --volume=$(pwd):/blog --workdir=/blog pandoc/minimal:latest"
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
