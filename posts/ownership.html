@@ -122,6 +122,10 @@ code span.wa { color: #282828; background-color: #fabd2f; } /* Warning */
 --inline-code-bg-color: var(--bg1);
 --code-bg-color: var(--bg1);
 --content-width: 800px;
+--keywords-color: var(--fg4);
+--article-list-bg-color: var(--bg1);
+--article-list-fg-color: var(--light-aqua);
+--author-color: var(--dark-aqua);
 }
 body {
 padding: 2em;
@@ -151,6 +155,9 @@ color: var(--link-hover-color);
 }
 h1 {
 color: var(--title-color);
+}
+h1.title {
+margin-bottom: .3em;
 }
 h1::after {
 content: '';
@@ -188,6 +195,12 @@ text-align: justify;
 .text-underline {
 text-decoration: underline;
 }
+.text-ligatures {
+font-variant-ligatures: normal;
+}
+.text-hide {
+display: none;
+}
 .list-title {
 margin-bottom: 0;
 }
@@ -196,6 +209,9 @@ margin-top: 0;
 }
 .width-content {
 width: var(--content-width);
+}
+.no-bottom-margin {
+margin-bottom: 0;
 }
 #top-bar {
 width: 100%;
@@ -227,13 +243,44 @@ transition: color ease-in 100ms;
 #menu ul li a:hover {
 color: var(--nav-bar-link-hover-color);
 }
-ul.keywords {
+.keywords > ul {
+margin-top: 0;
 display: flex;
 flex-flow: row nowrap;
-gap: 2em;
+gap: 1em;
+padding: 0;
+color: var(--keywords-color);
 }
-ul.keywords li {
+.keywords > ul > li {
 list-style: none;
+}
+.article-list > ul {
+display: flex;
+flex-flow: column nowrap;
+gap: 1em;
+padding: 0;
+}
+.article-list > ul > li {
+padding: 0 1em;
+background-color: var(--article-list-bg-color);
+list-style: none;
+}
+.article-list > ul > li a {
+font-variant-ligatures: normal;
+color: var(--article-list-fg-color);
+}
+.article-title {
+color: var(--title-color);
+}
+.article-title::after {
+content: '';
+display: block;
+width: 100%;
+border-bottom: solid 3px;
+}
+.author {
+color: var(--author-color);
+margin-top: .3em;
 }
 @media screen and (max-width: 1000px) {
 .width-content {
@@ -290,108 +337,46 @@ src: url(data:application/font-sfnt;base64,AAEAAAAQAQAABAAAR0RFRhRICT4AAnW8AAAB7
                     <li><a href="/about.html">About</a></li>
                 </ul>
             </nav>
-        </header>
-        <main class="width-content">
-                                    <div id="title-block-header">
-                <h1 class="title">Como nunca sofrer de segfault e double
-free</h1>
-                                <div class="authors">
-                    <!-- Puts "Escrito por" when `lang-pt` is set and "Authored by" when `lang-en` is set -->
-                    <p><span class="text-underline">Escrito por:</span> Gabriel
-Dertoni</p>
+        </header>        <main class="width-content">
+            <div id="title-block-header">
+                <h1 class="title">Como nunca sofrer de segfault e double free</h1>
+                <div class="keywords">
+                    <ul>
+                                            </ul>
                 </div>
-                            </div>
-                        <ul class="keywords">
-                            </ul>
-                        <nav id="TOC">
+                <div class="authors">
+                    <!-- Puts "Escrito por" when `lang-pt` is set and "Authored by" when `lang-en` is set -->
+                    <p class="author"> Gabriel Dertoni</p>
+                </div>
+            </div>
+            <nav id="TOC">
                 <!-- Puts "Conteúdo" when `lang-pt` is set and "Contents" when `lang-en` is set -->
                 <p class="list-title text-underline">Conteúdo:</p>
                 <ul>
                 <li><a href="#introdução">Introdução</a></li>
-                <li><a href="#quem-aloca-libera">Quem aloca,
-                libera</a></li>
+                <li><a href="#quem-aloca-libera">Quem aloca, libera</a></li>
                 <li><a href="#donos-da-memória">Donos da memória</a>
                 <ul>
-                <li><a href="#estruturas-sempre-alocadas-na-heap">Estruturas
-                sempre alocadas na heap</a></li>
-                <li><a href="#trabalhando-com-estruturas">Trabalhando
-                com estruturas</a></li>
-                <li><a href="#comentários-eficientes">Comentários
-                eficientes</a></li>
+                <li><a href="#estruturas-sempre-alocadas-na-heap">Estruturas sempre alocadas na heap</a></li>
+                <li><a href="#trabalhando-com-estruturas">Trabalhando com estruturas</a></li>
+                <li><a href="#comentários-eficientes">Comentários eficientes</a></li>
                 </ul></li>
                 </ul>
             </nav>
-                        <h2 id="introdução">Introdução</h2>
-                        <p>Nesse post, pretendo definir dois conceitos
-                        que podem ajudar na hora de usar alocação
-                        dinâmica em linguagens sem gerenciamento de
-                        memória automático. O primeiro conceito será
-                        mais simples, mas também limitado, já o segundo
-                        será um pouco mais complexo, mas funciona de
-                        maneira mais genérica e pode ser aplicado a uma
-                        variedade maior de casos.</p>
-                        <h2 id="quem-aloca-libera">Quem aloca,
-                        libera</h2>
-                        <p>Muitas vezes ao escrever uma função ou um
-                        bloco de código, uma alocação dinâmica é
-                        necessária, mas apenas localmente. Nesses casos,
-                        podemos os usar a ideia de “quem aloca libera”.
-                        Logo após escrever o código de alocação,
-                        adicionamos o código de liberação logo em
-                        seguida, para garantir que não será
-                        esquecido.</p>
-                        <div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> minha_funcao<span class="op">()</span> <span class="op">{</span></span>
+            <h2 id="introdução">Introdução</h2>
+            <p>Nesse post, pretendo definir dois conceitos que podem ajudar na hora de usar alocação dinâmica em linguagens sem gerenciamento de memória automático. O primeiro conceito será mais simples, mas também limitado, já o segundo será um pouco mais complexo, mas funciona de maneira mais genérica e pode ser aplicado a uma variedade maior de casos.</p>
+            <h2 id="quem-aloca-libera">Quem aloca, libera</h2>
+            <p>Muitas vezes ao escrever uma função ou um bloco de código, uma alocação dinâmica é necessária, mas apenas localmente. Nesses casos, podemos os usar a ideia de “quem aloca libera”. Logo após escrever o código de alocação, adicionamos o código de liberação logo em seguida, para garantir que não será esquecido.</p>
+            <div class="sourceCode" id="cb1"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> minha_funcao<span class="op">()</span> <span class="op">{</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> <span class="op">*</span>ponteiro <span class="op">=</span> <span class="op">(</span><span class="dt">int</span> <span class="op">*)</span>malloc<span class="op">(</span><span class="dv">10</span> <span class="op">*</span> <span class="kw">sizeof</span><span class="op">(</span><span class="dt">int</span><span class="op">));</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    free<span class="op">(</span>ponteiro<span class="op">);</span></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-                        <p>O resto do código pode ser inserido entre o
-                        <code>malloc</code>e o <code>free</code>. Nesse
-                        modelo, não precisamos nos preocupar com nada
-                        além disso: escrever <code>malloc</code> seguido
-                        de <code>free</code> e depois vem o resto. Além
-                        disso, devemos imaginar que a variável
-                        <code>ponteiro</code> será a variável a ser
-                        liberada e por isso, não deve ser incrementada
-                        ou coisas do gênero. Além disso, só iremos
-                        fornecer esse ponteiro a outras funções se
-                        soubermos que essas outras funções <strong>não
-                        liberarão a memória dele</strong>, apenas o
-                        <code>free</code> ao fim do bloco deve fazer
-                        isso.</p>
-                        <h2 id="donos-da-memória">Donos da memória</h2>
-                        <p>Apesar da abordagem “quem aloca, libera” ter
-                        sua maior vantagem na simplicidade, nem sempre
-                        ela é suficiente. Por exemplo, digamos que
-                        exista uma função <code>readline</code> que lê
-                        uma linha da entrada padrão e retorna um
-                        ponteiro à string com os caracteres dessa linha.
-                        Nesse caso, a função <code>readline</code> é
-                        quem aloca a memória, mas ela precisa retornar
-                        essa memória ainda alocada e, por isso, não pode
-                        a liberar (como <a href="https://www.notion.so/Fun-es-puras-e-impuras-boas-pr-ticas-de-programa-o-5cc1e69008d3472c8badf9f291608458">comentado
-                        num outro artigo</a>, essas comportamentos devem
-                        ser documentadas).</p>
-                        <p>Nesse texto, usarei posse e propriedade de
-                        forma intercambiável. Existe uma diferença no
-                        sentido legal da palavra, mas para os propósitos
-                        desse texto, elas se referirão ao mesmo
-                        conceito.</p>
-                        <p>Para resolver esse problema, podemos usar o
-                        conceito de “dono ou proprietário da memória”.
-                        Um proprietário de memória é um ponteiro que
-                        aponta para um bloco qualquer de memória
-                        armazenada na heap com a importante
-                        responsabilidade de ser liberado. Esse ponteiro
-                        possui a posse de um bloco de memória e apenas
-                        ele deve liberá-lo. Para evitar <code>double
-                        free</code> devemos garantir que exista apenas
-                        um proprietário para cada alocação. No caso da
-                        função <code>readline</code>, diríamos que ela
-                        retorna a posse de um ponteiro. A função que
-                        chamadora recebe essa posse numa variável e
-                        então essa variável se torna a responsável por
-                        ser liberada. Por exemplo</p>
-                        <div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Retorna um ponteiro a uma alocação na heap que deve ser liberada através de `free`.</span></span>
+            <p>O resto do código pode ser inserido entre o <code>malloc</code>e o <code>free</code>. Nesse modelo, não precisamos nos preocupar com nada além disso: escrever <code>malloc</code> seguido de <code>free</code> e depois vem o resto. Além disso, devemos imaginar que a variável <code>ponteiro</code> será a variável a ser liberada e por isso, não deve ser incrementada ou coisas do gênero. Além disso, só iremos fornecer esse ponteiro a outras funções se soubermos que essas outras funções <strong>não liberarão a memória dele</strong>, apenas o <code>free</code> ao fim do bloco deve fazer isso.</p>
+            <h2 id="donos-da-memória">Donos da memória</h2>
+            <p>Apesar da abordagem “quem aloca, libera” ter sua maior vantagem na simplicidade, nem sempre ela é suficiente. Por exemplo, digamos que exista uma função <code>readline</code> que lê uma linha da entrada padrão e retorna um ponteiro à string com os caracteres dessa linha. Nesse caso, a função <code>readline</code> é quem aloca a memória, mas ela precisa retornar essa memória ainda alocada e, por isso, não pode a liberar (como <a href="https://www.notion.so/Fun-es-puras-e-impuras-boas-pr-ticas-de-programa-o-5cc1e69008d3472c8badf9f291608458">comentado num outro artigo</a>, essas comportamentos devem ser documentadas).</p>
+            <p>Nesse texto, usarei posse e propriedade de forma intercambiável. Existe uma diferença no sentido legal da palavra, mas para os propósitos desse texto, elas se referirão ao mesmo conceito.</p>
+            <p>Para resolver esse problema, podemos usar o conceito de “dono ou proprietário da memória”. Um proprietário de memória é um ponteiro que aponta para um bloco qualquer de memória armazenada na heap com a importante responsabilidade de ser liberado. Esse ponteiro possui a posse de um bloco de memória e apenas ele deve liberá-lo. Para evitar <code>double free</code> devemos garantir que exista apenas um proprietário para cada alocação. No caso da função <code>readline</code>, diríamos que ela retorna a posse de um ponteiro. A função que chamadora recebe essa posse numa variável e então essa variável se torna a responsável por ser liberada. Por exemplo</p>
+            <div class="sourceCode" id="cb2"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Retorna um ponteiro a uma alocação na heap que deve ser liberada através de `free`.</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="dt">char</span> <span class="op">*</span>readline<span class="op">()</span> <span class="op">{</span> <span class="co">/* implementação */</span> <span class="op">}</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
@@ -408,41 +393,15 @@ Dertoni</p>
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    free<span class="op">(</span>intput<span class="op">);</span></span>
 <span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-                        <p>Pode parecer óbvio, mas para que isso
-                        realmente funcione, algumas regras devem ser
-                        seguidas.</p>
-                        <ol type="1">
-                        <li>A posse do ponteiro não pode ser
-                        multiplicada, deve haver a cada momento apenas
-                        <strong>um</strong> proprietário.</li>
-                        <li>Quando um ponteiro proprietário chega ao
-                        final de seu uso, ele deve ceder a sua posse. A
-                        última instância disso é a função
-                        <code>free</code>, que toma como argumento a
-                        posse de um ponteiro e o libera, fazendo a posse
-                        “sumir”.</li>
-                        <li>Quando um ponteiro cede a posse de um bloco
-                        de memória, ele não pode mais ser liberado. Ele
-                        deixa de ser proprietário e se torna apenas uma
-                        referência ao bloco de memória. Entretanto, para
-                        manter as coisas mais seguras, podemos dizer que
-                        após ceder a posse, não devemos nunca mais usar
-                        esse ponteiro.</li>
-                        </ol>
-                        <h3 id="estruturas-sempre-alocadas-na-heap">Estruturas
-                        sempre alocadas na heap</h3>
-                        <p>Em alguns casos, é necessário escrever uma
-                        função de criação e liberação para alguma
-                        estrutura de dados customizada. Quando esse é o
-                        caso, haverá alguma função
-                        <code>liberar_estrutura()</code> que
-                        internamente libera todos os blocos necessários.
-                        Nesse caso, podemos dizer que a função de
-                        liberação toma propriedade do ponteiro. Por
-                        isso, após chamá-la, o ponteiro não pode mais
-                        ser liberado, já que não é mais proprietário. Um
-                        exemplo</p>
-                        <div class="sourceCode" id="cb3"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Um nó de uma lista encadeada.</span></span>
+            <p>Pode parecer óbvio, mas para que isso realmente funcione, algumas regras devem ser seguidas.</p>
+            <ol type="1">
+            <li>A posse do ponteiro não pode ser multiplicada, deve haver a cada momento apenas <strong>um</strong> proprietário.</li>
+            <li>Quando um ponteiro proprietário chega ao final de seu uso, ele deve ceder a sua posse. A última instância disso é a função <code>free</code>, que toma como argumento a posse de um ponteiro e o libera, fazendo a posse “sumir”.</li>
+            <li>Quando um ponteiro cede a posse de um bloco de memória, ele não pode mais ser liberado. Ele deixa de ser proprietário e se torna apenas uma referência ao bloco de memória. Entretanto, para manter as coisas mais seguras, podemos dizer que após ceder a posse, não devemos nunca mais usar esse ponteiro.</li>
+            </ol>
+            <h3 id="estruturas-sempre-alocadas-na-heap">Estruturas sempre alocadas na heap</h3>
+            <p>Em alguns casos, é necessário escrever uma função de criação e liberação para alguma estrutura de dados customizada. Quando esse é o caso, haverá alguma função <code>liberar_estrutura()</code> que internamente libera todos os blocos necessários. Nesse caso, podemos dizer que a função de liberação toma propriedade do ponteiro. Por isso, após chamá-la, o ponteiro não pode mais ser liberado, já que não é mais proprietário. Um exemplo</p>
+            <div class="sourceCode" id="cb3"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Um nó de uma lista encadeada.</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> No <span class="op">{</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> valor<span class="op">;</span></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">struct</span> No <span class="op">*</span>prox<span class="op">;</span></span>
@@ -488,13 +447,9 @@ Dertoni</p>
 <span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>    <span class="co">// `ponta-&gt;valor` não pode mais ser acessado.</span></span>
 <span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-                        <h3 id="trabalhando-com-estruturas">Trabalhando
-                        com estruturas</h3>
-                        <p>Uma outra situação possível é quando criamos
-                        estruturas que em si são alocadas na
-                        <em>stack</em>, mas contém ponteiros para dados
-                        na <em>heap</em>.</p>
-                        <div class="sourceCode" id="cb4"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Vec <span class="op">{</span></span>
+            <h3 id="trabalhando-com-estruturas">Trabalhando com estruturas</h3>
+            <p>Uma outra situação possível é quando criamos estruturas que em si são alocadas na <em>stack</em>, mas contém ponteiros para dados na <em>heap</em>.</p>
+            <div class="sourceCode" id="cb4"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> Vec <span class="op">{</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> len<span class="op">;</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> cap<span class="op">;</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> <span class="op">*</span>ptr<span class="op">;</span></span>
@@ -520,42 +475,17 @@ Dertoni</p>
 <span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    vec_free<span class="op">(</span>inteiros<span class="op">);</span></span>
 <span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Não podemos mais usar a variável `inteiros`.</span></span>
 <span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-                        <p>Aqui podemos diferenciar o que é proprietário
-                        e do que é referência. Podemos definir que, o
-                        variáveis do tipo <code>struct Vec</code> serão
-                        proprietárias, e <code>struct Vec *</code> será
-                        uma referência. Assim fica fácil! A função
-                        <code>vec_new()</code> claramente retorna
-                        <code>struct Vec</code> o que é uma propriedade.
-                        Além disso <code>vec_free</code> recebe uma
-                        propriedade, ou seja, alguma variável precisa
-                        ceder sua propriedade para poder chamar essa
-                        função.</p>
-                        <p>Isso torna intuitivo o conceito de posse e
-                        referência, quando vemos um ponteiro sabemos se
-                        tratar de uma referência que pode modificar a
-                        estrutura. Um ponteiro <code>const</code> é uma
-                        referência imutável e um tipo que não é um
-                        ponteiro representa uma posse.</p>
-                        <h3 id="comentários-eficientes">Comentários
-                        eficientes</h3>
-                        <p>Uma possibilidade de notação que desenvolvi é
-                        inspirado pela linguagem <a href="https://www.rust-lang.org/pt-BR">Rust</a>.
-                        Ao comentar os argumentos que uma função recebe,
-                        quando for um ponteiro, podemos denotar de uma
-                        forma dentre algumas possibilidades:</p>
-                        <ul>
-                        <li><p><code>[ref]</code> para referências que
-                        não modificam o conteúdo, um ponteiro
-                        constante.</p></li>
-                        <li><p><code>[ref mut]</code> para referências
-                        que modificam o conteúdo.</p></li>
-                        <li><p><code>[ownership]</code> para um
-                        parâmetro que transfere posse.</p></li>
-                        </ul>
-                        <p>Com essa notação podemos reescrever os
-                        comentários de um dos exemplos anteriores</p>
-                        <div class="sourceCode" id="cb5"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Um nó de uma lista encadeada.</span></span>
+            <p>Aqui podemos diferenciar o que é proprietário e do que é referência. Podemos definir que, o variáveis do tipo <code>struct Vec</code> serão proprietárias, e <code>struct Vec *</code> será uma referência. Assim fica fácil! A função <code>vec_new()</code> claramente retorna <code>struct Vec</code> o que é uma propriedade. Além disso <code>vec_free</code> recebe uma propriedade, ou seja, alguma variável precisa ceder sua propriedade para poder chamar essa função.</p>
+            <p>Isso torna intuitivo o conceito de posse e referência, quando vemos um ponteiro sabemos se tratar de uma referência que pode modificar a estrutura. Um ponteiro <code>const</code> é uma referência imutável e um tipo que não é um ponteiro representa uma posse.</p>
+            <h3 id="comentários-eficientes">Comentários eficientes</h3>
+            <p>Uma possibilidade de notação que desenvolvi é inspirado pela linguagem <a href="https://www.rust-lang.org/pt-BR">Rust</a>. Ao comentar os argumentos que uma função recebe, quando for um ponteiro, podemos denotar de uma forma dentre algumas possibilidades:</p>
+            <ul>
+            <li><p><code>[ref]</code> para referências que não modificam o conteúdo, um ponteiro constante.</p></li>
+            <li><p><code>[ref mut]</code> para referências que modificam o conteúdo.</p></li>
+            <li><p><code>[ownership]</code> para um parâmetro que transfere posse.</p></li>
+            </ul>
+            <p>Com essa notação podemos reescrever os comentários de um dos exemplos anteriores</p>
+            <div class="sourceCode" id="cb5"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Um nó de uma lista encadeada.</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">struct</span> No <span class="op">{</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> valor<span class="op">;</span></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
@@ -588,13 +518,7 @@ Dertoni</p>
 <span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co"> */</span></span>
 <span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> no_liberar<span class="op">(</span><span class="kw">struct</span> No <span class="op">*</span>no<span class="op">);</span></span></code></pre></div>
-                        <p>Claro, isso é apenas uma possibilidade de
-                        como documentar as funções e seus argumentos, e
-                        uma bem verbosa em particular. Mas serve bem o
-                        papel de informar a quaisquer usuários do código
-                        (inclusive e principalmente a mim mesmo) quais
-                        as propriedades esperadas dos argumentos e
-                        valores de retorno.</p>
-                    </main>
+            <p>Claro, isso é apenas uma possibilidade de como documentar as funções e seus argumentos, e uma bem verbosa em particular. Mas serve bem o papel de informar a quaisquer usuários do código (inclusive e principalmente a mim mesmo) quais as propriedades esperadas dos argumentos e valores de retorno.</p>
+        </main>
     </body>
 </html>
