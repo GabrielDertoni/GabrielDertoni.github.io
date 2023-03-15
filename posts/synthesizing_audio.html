@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-br" xml:lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Gabriel Dertoni" />
+  <meta name="keywords" content="haskell, audio, functional" />
+  <title>Sintetizando Áudio com Programação Funcional Reativa</title>
+  <style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+</style>
+  <style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+div.sourceCode
+{ color: #ebdbb2; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span { color: #ebdbb2; } 
+code span.al { color: #282828; background-color: #cc241d; font-weight: bold; } 
+code span.an { color: #98971a; } 
+code span.at { color: #d79921; } 
+code span.bn { color: #f67400; } 
+code span.bu { color: #d65d0e; } 
+code span.cf { color: #cc241d; font-weight: bold; } 
+code span.ch { color: #b16286; } 
+code span.cn { color: #b16286; font-weight: bold; } 
+code span.co { color: #928374; } 
+code span.cv { color: #928374; } 
+code span.do { color: #98971a; } 
+code span.dt { color: #d79921; } 
+code span.dv { color: #f67400; } 
+code span.er { color: #cc241d; text-decoration: underline; } 
+code span.ex { color: #689d6a; font-weight: bold; } 
+code span.fl { color: #f67400; } 
+code span.fu { color: #689d6a; } 
+code span.im { color: #689d6a; } 
+code span.in { color: #282828; background-color: #83a598; } 
+code span.kw { color: #ebdbb2; font-weight: bold; } 
+code span.op { color: #ebdbb2; } 
+code span.ot { color: #689d6a; } 
+code span.pp { color: #d65d0e; } 
+code span.re { color: #928374; background-color: #1d2021; } 
+code span.sc { color: #b16286; } 
+code span.ss { color: #98971a; } 
+code span.st { color: #98971a; } 
+code span.va { color: #458588; } 
+code span.vs { color: #848216; } 
+code span.wa { color: #282828; background-color: #fabd2f; } 
+</style>
+  <style type="text/css">@import url('https://fonts.googleapis.com/css2?family=Fira+Code&family=Inter&display=swap')</style>
+  <style type="text/css">:root {
+--bg: #282828;
+--bg0-h: #1d2021;
+--bg0-s: #32302f;
+--bg0: #282828;
+--bg1: #3c3836;
+--bg2: #504945;
+--bg3: #665c54;
+--bg4: #7c6f64;
+--fg: #ebdbb2;
+--fg0: #fbf1c7;
+--fg1: #ebdbb2;
+--fg2: #d5c4a1;
+--fg3: #bdae93;
+--fg4: #a89984;
+--dark-red: #cc241d;
+--dark-green: #98971a;
+--dark-yellow: #d79921;
+--dark-orange: #d65d0e;
+--dark-blue: #458588;
+--dark-purple: #b16286;
+--dark-aqua: #689d6a;
+--dark-grey: #a89984;
+--light-red: #fb4934;
+--light-green: #b8bb26;
+--light-yellow: #fabd2f;
+--light-orange: #fe8019;
+--light-blue: #83a598;
+--light-purple: #d3869b;
+--light-aqua: #8ec07c;
+--light-grey: #928374;
+--top-bar-bg-color: var(--fg0);
+--top-bar-fg-color: var(--bg0-h);
+--nav-bar-link-color: var(--fg0);
+--nav-bar-link-hover-color: var(--light-orange);
+--main-text-color: var(--fg);
+--title-color: var(--light-aqua);
+--section-color: var(--light-blue);
+--link-color: var(--dark-blue);
+--link-hover-color: var(--light-blue);
+--inline-code-color: var(--light-orange);
+--inline-code-bg-color: var(--bg1);
+--code-bg-color: var(--bg1);
+--content-width: 800px;
+--keywords-color: var(--fg4);
+--article-list-bg-color: var(--bg1);
+--article-list-fg-color: var(--light-aqua);
+--author-color: var(--dark-aqua);
+}
+::-webkit-scrollbar-thumb {
+border-radius: 10px;
+
+background-color: #0f0f0f;
+}
+::-webkit-scrollbar {
+width: 12px;
+height: 12px;
+background-color: #282828;
+}
+::-webkit-scrollbar-track {
+-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+border-radius: 10px;
+background-color: #282828;
+}
+body {
+padding: 2em;
+font-size: 1rem;
+padding-top: 0;
+background-color: #282828;
+color: var(--main-text-color);
+font-family: 'Fira Code', monospace;
+font-variant-ligatures: normal;
+display: flex;
+flex-flow: column nowrap;
+align-items: center;
+}
+header {
+width: 100%;
+display: flex;
+flex-flow: column nowrap;
+align-items: center;
+}
+a {
+color: var(--link-color);
+transition: color ease-in 100ms;
+font-weight: 600;
+}
+a:hover {
+color: var(--link-hover-color);
+}
+h1 {
+color: var(--title-color);
+}
+h1.title {
+margin-bottom: .3em;
+}
+h1::after {
+content: '';
+display: block;
+width: 100%;
+border-bottom: solid 3px;
+}
+h2 {
+color: var(--section-color);
+}
+code {
+padding: 1px 6px;
+border-radius: 3px;
+color: var(--inline-code-color);
+background-color: var(--inline-code-bg-color);
+font-family: 'Fira Code';
+font-variant-ligatures: normal;
+}
+code:not(.sourceCode) {
+font-size: .8em;
+}
+pre code {
+padding: 0;
+border-radius: 0;
+color: var(--main-text-color);
+background-color: transparent;
+font-size: 1em;
+font-weight: normal;
+}
+pre.sourceCode {
+padding: 1em;
+background-color: var(--code-bg-color);
+border-radius: 5px;
+overflow: auto;
+font-size: .9em;
+}
+p {
+text-align: justify;
+}
+.text-underline {
+text-decoration: underline;
+}
+.text-ligatures {
+font-variant-ligatures: normal;
+}
+.text-hide {
+display: none;
+}
+.list-title {
+margin-bottom: 0;
+}
+.list-title ~ ul {
+margin-top: 0;
+}
+.width-content {
+width: var(--content-width);
+}
+.no-bottom-margin {
+margin-bottom: 0;
+}
+#top-bar {
+width: 100%;
+padding: .5em;
+background-color: var(--top-bar-bg-color);
+color: var(--top-bar-fg-color);
+display: flex;
+flex-flow: row nowrap;
+justify-content: center;
+}
+.blog-title {
+text-transform: uppercase;
+font-weight: bold;
+}
+#menu ul {
+padding: 0;
+display: flex;
+flex-flow: row nowrap;
+justify-content: flex-start;
+gap: 2rem;
+}
+#menu ul li {
+list-style: none;
+}
+#menu ul li a {
+color: var(--nav-bar-link-color);
+transition: color ease-in 100ms;
+}
+#menu ul li a:hover {
+color: var(--nav-bar-link-hover-color);
+}
+.keywords > ul {
+margin-top: 0;
+display: flex;
+flex-flow: row nowrap;
+gap: 1em;
+padding: 0;
+color: var(--keywords-color);
+}
+.keywords > ul > li {
+list-style: none;
+}
+.article-list > ul {
+display: flex;
+flex-flow: column nowrap;
+gap: 1em;
+padding: 0;
+}
+.article-list > ul > li {
+padding: 0 1em;
+background-color: var(--article-list-bg-color);
+list-style: none;
+}
+.article-list > ul > li a {
+font-variant-ligatures: normal;
+color: var(--article-list-fg-color);
+}
+.article-title {
+color: var(--title-color);
+}
+.article-title::after {
+content: '';
+display: block;
+width: 100%;
+border-bottom: solid 3px;
+}
+.author {
+color: var(--author-color);
+margin-top: .3em;
+}
+@media screen and (max-width: 1000px) {
+.width-content {
+width: calc(100% - 1rem);
+}
+body {
+padding: 0;
+font-size: .8rem;
+}
+}
+</style>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+</head>
+    <body>
+        <header>
+            <div id="top-bar">
+                <div class="width-content">
+                    <div class="blog-title">Gabriel Dertoni</div>
+                </div>
+            </div>
+            <nav class="width-content" id="menu">
+                <ul>
+                    <li><a href="/index.html">Index</a></li>
+                    <li><a href="/about.html">About</a></li>
+                </ul>
+            </nav>
+        </header>        <main class="width-content">
+            <div id="title-block-header">
+                <h1 class="title">Sintetizando Áudio com Programação Funcional Reativa</h1>
+                <div class="keywords">
+                    <ul>
+                                                <li>#haskell</li>
+                                                <li>#audio</li>
+                                                <li>#functional</li>
+                                            </ul>
+                </div>
+                <div class="authors">
+                    <!-- Puts "Escrito por" when `lang-pt` is set and "Authored by" when `lang-en` is set -->
+                    <p class="author"> Gabriel Dertoni</p>
+                </div>
+            </div>
+            <nav id="TOC">
+                <!-- Puts "Conteúdo" when `lang-pt` is set and "Contents" when `lang-en` is set -->
+                <p class="list-title text-underline">Conteúdo:</p>
+                <ul>
+                <li><a href="#introdução-à-programação-funcional-reativa" id="toc-introdução-à-programação-funcional-reativa">Introdução à Programação Funcional Reativa</a></li>
+                <li><a href="#aplicando-pfr-para-síntese-de-áudio" id="toc-aplicando-pfr-para-síntese-de-áudio">Aplicando PFR para síntese de áudio</a></li>
+                <li><a href="#tocando-sons" id="toc-tocando-sons">Tocando sons</a></li>
+                <li><a href="#mais-sons" id="toc-mais-sons">Mais sons</a></li>
+                <li><a href="#escrevendo-um-arquivo-.wav" id="toc-escrevendo-um-arquivo-.wav">Escrevendo um arquivo .wav</a></li>
+                <li><a href="#reatividade" id="toc-reatividade">Reatividade</a></li>
+                <li><a href="#to-be-continued" id="toc-to-be-continued">To be continued…</a></li>
+                </ul>
+            </nav>
+            <h2 id="introdução-à-programação-funcional-reativa">Introdução à Programação Funcional Reativa</h2>
+            <p>Recentemente me deparei com o conceito de Programação Funcional Reativa (<em>Functional Reactive Programming (FRP)</em>), sendo um amador do paradigma funcional, resolvi pesquisar mais sobre o que seria isso e me deparei com <a href="https://www.youtube.com/watch?v=rfmkzp76M4M&amp;t=1546s">uma palestra</a> do criador desse conceito, Conal Elliott. Se trata de uma palestra excelente que recomendaria a todos interessados mais no assunto. Entretanto, correndo o risco de fazer simplificações grosseiras, vou tentar resumir. Na palestra, o autor descreve a PRF como duas coisas centrais</p>
+            <ul>
+            <li>Notação simples e precisa (elegante e rigorosa)</li>
+            <li>Tempo contínuo (natural e combinável)</li>
+            </ul>
+            <p>A semântica dessa nova forma de pensar sobre programas é composta de coisas que Conal chama de comportamentos (<em>behaviours</em>) que seria análogo a uma função a partir do tempo. Dessa forma, poderiamos considerar</p>
+            <div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Behaviour</span> a <span class="ot">=</span> <span class="dt">Time</span> <span class="ot">-&gt;</span> a</span></code></pre></div>
+            <p>De acordo com Conal, é importante separar de maneira bem clara a semântica do que se está tentando fazer dos detalhes de implementação. Nese sentido, poderíamos imaginar que um <em>behaviour</em> na realidade é somente análogo (ou isomórfico) a uma função a partir do tempo. Aqui também vale notar que o tempo é contínuo e não discreto. De fato, esse valor de tempo poderia ser representado por um valor real</p>
+            <div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Time</span> <span class="ot">=</span> <span class="dt">R</span>;</span></code></pre></div>
+            <p>com esse conceito, já podemos perceber algumas formas de combinar <em>behaviours</em> para criar novos, por exemplo</p>
+            <div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Um comportamento que retorna o tempo atual</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ot">time ::</span> <span class="dt">Behaviour</span> <span class="dt">Time</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>time t <span class="ot">=</span> t</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">-- time = id -- Análogo à função identidade</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co">-- Um comportamento que recebe um valor e retorna ele</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">-- para qualquer tempo. Ou seja, define uma constante</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co">-- no tempo.</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="ot">lift0 ::</span> a <span class="ot">-&gt;</span> <span class="dt">Behaviour</span> a</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>lift0 val t <span class="ot">=</span> val</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co">-- lift0 = const -- Análogo à função const</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co">-- Dado uma função de a para b, transforma cada valor</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="co">-- de um behaviour com a função</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="ot">lift1 ::</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">Behaviour</span> a <span class="ot">-&gt;</span> <span class="dt">Behaviour</span> b</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>lift1 f behaviour t <span class="ot">=</span> f (behaviour t)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co">-- lift1 = fmap -- Análogo à função fmap</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="ot">lift2 ::</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> <span class="dt">Behaviour</span> a <span class="ot">-&gt;</span> <span class="dt">Behaviour</span> b <span class="ot">-&gt;</span> <span class="dt">Behaviour</span> c</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>lift2 f behaviourA behaviourB t <span class="ot">=</span> f (behaviourA t) (behaviourB t)</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="co">-- lift2 = liftA2 -- Análogo à função liftA2</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="ot">timeTrans ::</span> <span class="dt">Behaviour</span> a <span class="ot">-&gt;</span> <span class="dt">Behaviour</span> <span class="dt">Time</span> <span class="ot">-&gt;</span> <span class="dt">Behaviour</span> a</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>timeTrans behaviourA behaviourT t <span class="ot">=</span> behaviourA (behaviourT t)</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="co">-- timeTrans = (.) -- Análogo à função (.)</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="co">-- Essa é legal! Poderia ser implementado usando o método</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a><span class="co">-- Runge-Kutta, mas não será o foco</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="ot">integral ::</span> <span class="dt">VectorSpace</span> a <span class="ot">=&gt;</span> <span class="dt">Behaviour</span> a <span class="ot">-&gt;</span> <span class="dt">Time</span> <span class="ot">-&gt;</span> <span class="dt">Behaviour</span> a</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> <span class="dt">Num</span> (<span class="dt">Behaviour</span> a) <span class="kw">where</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>    (<span class="op">+</span>) <span class="ot">=</span> lift2 (<span class="op">+</span>)</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>    (<span class="op">-</span>) <span class="ot">=</span> lift2 (<span class="op">-</span>)</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>    (<span class="op">*</span>) <span class="ot">=</span> lift2 (<span class="op">*</span>)</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">negate</span> <span class="ot">=</span> lift1 <span class="fu">negate</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>    <span class="fu">abs</span> <span class="ot">=</span> lift1 <span class="fu">negate</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">signum</span> <span class="ot">=</span> lift1 <span class="fu">signum</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    <span class="fu">fromInteger</span> <span class="ot">=</span> lift0 <span class="op">.</span> <span class="fu">fromInteger</span></span></code></pre></div>
+            <p>Aqui já estou mostrando algumas das formas de implementar essas funções, mas o que mais importa é o que elas fazem. Seria possível modificar a implementação sem mudar o comportamento.</p>
+            <h2 id="aplicando-pfr-para-síntese-de-áudio">Aplicando PFR para síntese de áudio</h2>
+            <p>Ao ver tudo isso, fiquei imediatamente pensando em como eu poderia implementar esses novos conceitos em algum programa. E foi aí que surgiu uma boa ideia! Uma função de tempo para um valor… Podemos usar isso para gerar música! Ora, na realidade a música é feita de ondas sonoras a uma onda sonora pode ser facilmente descrita como uma função do tempo para o valor da onda naquele momento. Tome como exemplo a função <span class="math inline">\(sen(t)\)</span>, ela vai gerar justamente uma onda com alguma frequência. Sabemos que para a função seno completar um ciclo, é necessário um intervalo de <span class="math inline">\(2\pi\)</span> em <span class="math inline">\(t\)</span>. Portanto, se considerarmos que <span class="math inline">\(t\)</span> é medido em segundos e quisermos que a função faça <span class="math inline">\(440\)</span> ciclos em um segundo (a nota Lá padrão de 440 Hz), basta multiplicar! Assim, podemos definir um behaviour para gera a nota Lá:</p>
+            <p>[Imagem da onda senoidal]</p>
+            <div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ot">standardA440 ::</span> <span class="dt">Behaviour</span> <span class="dt">Float</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>standradA440 t <span class="ot">=</span> <span class="fu">sin</span> (<span class="dv">2</span> <span class="op">*</span> π <span class="op">*</span> <span class="dv">440</span> <span class="op">*</span> t)</span></code></pre></div>
+            <p>Com essa função devemos ser capazes de extrair a forma de onda necessária para produzir a nota que queremos. Mas para isso, é necessário entender um pouco como funciona o áudio digital. Quando utilizamos o áudio analógico, a onda sonora primeiro existe em formato de onda elétrica. É uma variação da corrente elétrica que representa exatamente determinada onda sonora (ela é análoga às ondas sonoras, por isso chamamos de sistemas analógicos). Na hora de reproduzir o som, essa corrente elétrica é utilizada para mover a membrana da caixa de som na frequência em que varia, assim produzindo o som. Entretanto, no mundo digital, não temos o luxo de utilizar os infinitos valores que a corrente elétrica pode assumir, temos que nos contentar com zeros e uns! Por conta disso, não é possível armazenar perfeitamente o formato da onda em som digital, o melhor que se pode fazer é aproximar. Para fazer isso, guardamos somenta algumas amostras da onda original, a taxa no qual essa amostragem ocorre é convenientemente chamada de “taxa de amostragem” ou <em>sample rate</em>. Além disso, cada amostra é armazenada como um número binário e a quantidade de bits desse número é chamado de <em>bit rate</em>. Uma das formas de amostrar uma onda é com valores <code>Float</code> <span class="math inline">\(\in [-1, 1]\)</span>, sendo que <span class="math inline">\(-1\)</span> é o menor valor possível e <span class="math inline">\(1\)</span> o maior.</p>
+            <p>[Imagem da amostragem]</p>
+            <p>Uma coisa interessante de se notar é que a nossa função <code>standardA440</code>, em princípio é como uma onda perfeita. Podemos ler o valor da onda em qualquer momento e, como ainda não definimos o tipo binário que utilizaremos para medir o tempo, poderíamos imaginar que ela representa toda a informação da onda! Ou seja, essa forma de representar uma onda não possui perdas de discretização do tempo, assim como os sinais digitais típicos possuem. Para mim, esse é o real poder da programação funcional reativa! Ela te permite definir comportamentos com “resolução infinita”. Sim, a memória dos computadores não é infinita e eventualmente isso terá que ser discretizado de alguma forma, mas atrasar isso o máximo é muito poderoso e permite facilmente implementar programas que poderiam ser mais complexos se feitos da maneira imperativa. Apesar disso, para o resto desse texto, vou definir</p>
+            <div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Time</span> <span class="ot">=</span> <span class="dt">Float</span></span></code></pre></div>
+            <h2 id="tocando-sons">Tocando sons</h2>
+            <p>Enfim, de qualquer maneira, se quisermos tocar esse som num hardware digital, precisamos discrezar ele. Ou seja, temos que amostrar a nossa onda com algum <em>sample rate</em> e então tocar isso de alguma forma. Como um <em>behaviour</em> é simplesmente uma função a partir do tempo, podemos só aplicar ela numa lista com os tempos das amostras.</p>
+            <div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>sampleRate <span class="ot">=</span> <span class="dv">48000</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- Amostragem de 2 segundos de áudio</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="ot">samples ::</span> [<span class="dt">Float</span>]</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>samples <span class="ot">=</span> <span class="fu">fmap</span> standardA440 [<span class="fl">0.0</span>, <span class="fl">1.0</span> <span class="op">/</span> sampleRate, <span class="op">..</span> <span class="fl">2.0</span>]</span></code></pre></div>
+            <p>Para escrever isso para um arquivo que pode ser tocado, podemos serializar os valores <code>Float</code> para o formato little-endian e escrevê-los um atrás do outro num arquivo. Sim, é tão simples quanto isso! Para fazer isso em Haskell, vou usar o pacote <code>bytestring</code> que permite manipular bytes.</p>
+            <div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.ByteString.Builder</span> <span class="kw">as</span> <span class="dt">Bytes</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="ot">toBytesBuilder ::</span> [<span class="dt">Float</span>] <span class="ot">-&gt;</span> <span class="dt">Bytes.Builder</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>toBytesBuilder <span class="ot">=</span> <span class="fu">foldMap</span> Bytes.floatLE</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="ot">main ::</span> <span class="dt">IO</span> ()</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>main <span class="ot">=</span> Bytes.writeFile <span class="st">&quot;sound.bin&quot;</span> (toBytesBuilder samples)</span></code></pre></div>
+            <p>A única questão agora é que o arquivo que geramos é um arquivo binário <em>RAW</em>, ou seja, não possui metadados que indiquem o formato dele. Portanto, para poder ouvir ao som, precisamos usar algo como o Audacity, ou <code>ffplay</code> (linha de comando) que permitem tocar arquivos <em>RAW</em> de som. Para usar o Audacity, basta ir em <code>Arquivo &gt; Importar &gt; Arquivo Sem Formatação (RAW)</code> e daí selecionar as opções corretas (vai pedir o sample rate e o formato). Para usar o <code>ffplay</code> podemos rodar o seguinte comando <code>ffplay -f f32le -ar 48000 sound.bin</code>.</p>
+            <h2 id="mais-sons">Mais sons</h2>
+            <p>O Lá 440Hz é um padrão sobre o qual todas as outras notas são definidas. Para obter as outras notas, basta passar o número de semitons acima ou abaixo do Lá 440Hz. Como o foco aqui não é entender o porquê das coisas da música e como não sou músico, vou só mostrar a formula pronta:</p>
+            <div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Transforma o tempo para ir x vezes mais rápido</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- nessa implementação também é possível ver como é possível</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- combinar diferentes funções para produzir código simples</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co">-- e legível.</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="ot">timesFaster ::</span> <span class="dt">Float</span> <span class="ot">-&gt;</span> <span class="dt">Behaviour</span> <span class="dt">Time</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>timesFaster x <span class="ot">=</span> <span class="fu">const</span> x <span class="op">*</span> time</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co">-- Aqui usamos o `timeTrans` para transformar o tempo da função</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co">-- standardA440. Se o tempo passa mais rápido para essa função,</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="co">-- a onda produzida resultante terá uma frequência maior.</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="ot">semitonesUp ::</span> <span class="dt">Float</span> <span class="ot">-&gt;</span> <span class="dt">Behaviour</span> <span class="dt">Float</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>semitonesUP n <span class="ot">=</span> timeTrans standardA440 (timesFaster (a <span class="op">**</span> n))</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">where</span> <span class="co">-- número mágico, pergunte a um músico</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>          a <span class="ot">=</span> <span class="fl">2.0</span> <span class="op">**</span> (<span class="fl">1.0</span> <span class="op">/</span> <span class="fl">12.0</span>)</span></code></pre></div>
+            <p>Então agora, podemos tentar gerar um som que toca primeiro uma nota e depois outra. Mais pra frente veremos que há uma forma melhor de fazer isso, mas por agora podemos amostrar primeiro a primeira nota, depois a segunda e depois juntar as duas.</p>
+            <div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ot">samples ::</span> [<span class="dt">Float</span>]</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>samples <span class="ot">=</span> tone1Samples <span class="op">++</span> tone2Samples <span class="co">-- Concatena</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">where</span> tone1Samples <span class="ot">=</span> <span class="fu">fmap</span> tone2 sampleTimes <span class="co">-- Um Lá</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>          tone2Samples <span class="ot">=</span> <span class="fu">fmap</span> tone1 sampleTimes <span class="co">-- Um Sí</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>          tone1 <span class="ot">=</span> semitonesUp <span class="dv">0</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>          tone2 <span class="ot">=</span> semitonesUp <span class="dv">2</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>          sampleTimes1 <span class="ot">=</span> [<span class="fl">0.0</span>, <span class="fl">1.0</span><span class="op">/</span>sampleRate <span class="op">..</span> <span class="fl">1.0</span>]</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>          sampleTimes2 <span class="ot">=</span> [<span class="fl">1.0</span>, <span class="fl">1.0</span> <span class="op">+</span> <span class="fl">1.0</span><span class="op">/</span>sampleRate <span class="op">..</span> <span class="fl">2.0</span>]</span></code></pre></div>
+            <p>Se tocarmos esse som, entretanto, será bem notável algo que já era possível perceber antes. Quando o som começa ou as notas trocam, há um clipe, um barulho que acontece bem nesses momentos. O motivo pelo qual isso acontece, é que a caixa de som não consegue instantâneamente mudar de um som para outro. Ela precisa de uma transição. Na realidade, quando estamos falando de música sintetizada, geralmente quando se quer modelar o toque de uma nota em algum instrumentos, a onda dessa nota é colocada dentro de um envelope. Esse envelope controla o volume da nota em 4 etapas, <em>attack</em>, <em>decay</em>, <em>sustain</em> e <em>release</em>. A imagem abaixo explica melhor como isso funciona.</p>
+            <p>[Imagem envelope]</p>
+            <p>O envelope faz com que, quando a nota é tocada ela vai além do nível normal dela o que seria equivalente a quando alguém aperta a tecla do piano e o martelo bate na corda. Esse som é inicialmente mais alto, mas depois decai um pouco até que chega num nível onde ele se mantém enquanto a pessoa estiver, digamos, segurando a tecla do piano. Finalmente, quando a tecla é soltada, a nota decai já que os abafadores encostam nas cordas. A nota não surge ou decai instantâneamente e é isso que temos que modelar a seguir!</p>
+            <div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Duration</span> <span class="ot">=</span> <span class="dt">Float</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Volume</span> <span class="ot">=</span> <span class="dt">Float</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Envelope</span> <span class="ot">=</span> <span class="dt">Envelope</span> {<span class="ot"> _attackDuration ::</span> <span class="dt">Duration</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>                         ,<span class="ot"> _decayDuration ::</span> <span class="dt">Duration</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>                         ,<span class="ot"> _sustainLevel ::</span> <span class="dt">Volume</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>                         ,<span class="ot"> _releaseDuration ::</span> <span class="dt">Duration</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>                         }</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co">-- Recebe um valor `t` entre [0, 1] e retorna um valor</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co">-- entre [lo, hi] interpolado linearmente</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="ot">lerp ::</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>lerp t lo hi <span class="ot">=</span> lo <span class="op">+</span> (hi <span class="op">-</span> lo) <span class="op">*</span> t</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="ot">mute ::</span> <span class="dt">Behaviour</span> <span class="dt">Volume</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>mute <span class="ot">=</span> <span class="fu">const</span> <span class="fl">0.0</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="ot">envelope ::</span> <span class="dt">Envelope</span> <span class="ot">-&gt;</span> <span class="dt">Duration</span> <span class="ot">-&gt;</span> <span class="dt">Time</span> <span class="ot">-&gt;</span> <span class="dt">Behaviour</span> <span class="dt">Volume</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>envelope <span class="dt">Envelope</span>{<span class="op">..</span>} sustainDuration start t</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> t <span class="op">&lt;</span> start <span class="ot">=</span> mute</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> t <span class="op">&lt;</span> afterAttack <span class="ot">=</span> t <span class="op">/</span> _attackDuration <span class="co">-- vai de 0 para 1</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> t <span class="op">&lt;</span> afterDecay <span class="ot">=</span> <span class="kw">let</span> t&#39; <span class="ot">=</span> t <span class="op">-</span> afterAttack</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>                      <span class="kw">in</span> lerp (t&#39; <span class="op">/</span> _decayDuration) <span class="fl">1.0</span> _sustainLevel</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> t <span class="op">&lt;</span> afterSustain <span class="ot">=</span> <span class="fu">const</span> _sustainLevel</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> t <span class="op">&lt;</span> afterRelease <span class="ot">=</span> <span class="kw">let</span> t&#39; <span class="ot">=</span> t <span class="op">-</span> afterSustain</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>                        <span class="kw">in</span> lerp (t&#39; <span class="op">/</span> _releaseDuration) _sustainLevel <span class="fl">0.0</span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> mute</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>    <span class="kw">where</span> afterAttack <span class="ot">=</span> start <span class="op">+</span> _attackDuration</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>          afterDecay <span class="ot">=</span> afterAttack <span class="op">+</span> _decayDuration</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>          afterSustain <span class="ot">=</span> afterDecay <span class="op">+</span> sustainDuration</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>          afterRelease <span class="ot">=</span> afterSustain <span class="op">+</span> _releaseDuration</span></code></pre></div>
+            <p>Aqui podemos notar algumas coisas. Primeiramente, essa implementação não é muito elegante, tem bastante código duplicado que poderíamos abstrair, mas por agora basta vai funcionar. Além disso, vale notar que <code>sustainDuration</code> não é parte do tipo <code>Envelope</code>, mas sim um parâmetro separado. Isso porque ele representa o tempo que o usuário segura a tecla do piano, por ex, ou seja, não faz parte da configuração de um envelope mas é um input do usuário. Por agora, vamos deixar tudo hardcoded mesmo, depois revisitaremos isso. Outra coisa que poderíamos customizar é a forma que toma as curvas de <em>attack</em>, <em>decay</em> e <em>release</em>.</p>
+            <p>Para testar o novo envelope, vamos fazer outra amostragem e escrever no arquivo!</p>
+            <div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ot">samples ::</span> [<span class="dt">Float</span>]</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>samples <span class="ot">=</span> tone1Samples <span class="op">++</span> tone2Samples <span class="co">-- Concatena</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">where</span> tone1Samples <span class="ot">=</span> <span class="fu">fmap</span> tone1 sampleTimes</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>          tone2Samples <span class="ot">=</span> <span class="fu">fmap</span> tone2 sampleTimes</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>          <span class="co">-- Mudar o volume de um som é tão simples quanto multiplicar</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>          <span class="co">-- por um Behaviour de volume!</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>          tone1 <span class="ot">=</span> noteEnvelope <span class="fl">0.0</span> <span class="op">*</span> semitonesUp <span class="dv">0</span> <span class="co">-- Um Lá</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>          tone2 <span class="ot">=</span> noteEnvelope <span class="fl">1.0</span> <span class="op">*</span> semitonesUp <span class="dv">2</span> <span class="co">-- Um Sí</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>          sampleTimes1 <span class="ot">=</span> [<span class="fl">0.0</span>, <span class="fl">1.0</span><span class="op">/</span>sampleRate <span class="op">..</span><span class="fl">1.0</span>]</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>          sampleTimes2 <span class="ot">=</span> [<span class="fl">1.0</span>, <span class="fl">1.0</span> <span class="op">+</span> <span class="fl">1.0</span><span class="op">/</span>sampleRate <span class="op">..</span><span class="fl">2.0</span>]</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>          noteEnvelope <span class="ot">=</span> envelope envelopeConfig <span class="fl">0.8</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>          envelopeConfig <span class="ot">=</span> <span class="dt">Envelope</span> { _attackDuration <span class="ot">=</span> <span class="fl">0.1</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>                                    , _decayDuration <span class="ot">=</span> <span class="fl">0.05</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>                                    , _sustainLevel <span class="ot">=</span> <span class="fl">0.8</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>                                    , _releaseDuration <span class="ot">=</span> <span class="fl">0.1</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>                                    }</span></code></pre></div>
+            <p>Uma outra coisa que podemos perceber é que, por conta dos envelopes, o volume do <code>tone1</code> vai ser <code>0</code> depois do primeiro segundo e o volume de <code>tone2</code> vai ser <code>0</code> no primeiro segundo. Ou seja, se adicionarmos as duas ondas, obteremos uma única onda que no primeiro segundo toca o Lá e no segundo toca o Sí.</p>
+            <div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ot">samples ::</span> [<span class="dt">Float</span>]</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>samples <span class="ot">=</span> waveSamples</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">where</span> waveSamples <span class="ot">=</span> <span class="fu">fmap</span> wave sampleTimes</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>          wave <span class="ot">=</span> tone1 <span class="op">+</span> tone2</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>          sampleTimes <span class="ot">=</span> [<span class="fl">0.0</span>, <span class="fl">1.0</span><span class="op">/</span>sampleRate <span class="op">..</span> <span class="fl">2.0</span>]</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>          <span class="co">-- Mudar o volume de um som é tão simples quanto multiplicar</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>          <span class="co">-- por um Behaviour de volume!</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>          tone1 <span class="ot">=</span> noteEnvelope <span class="fl">0.0</span> <span class="op">*</span> semitonesUp <span class="dv">0</span> <span class="co">-- Um Lá</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>          tone2 <span class="ot">=</span> noteEnvelope <span class="fl">1.0</span> <span class="op">*</span> semitonesUp <span class="dv">2</span> <span class="co">-- Um Sí</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>          noteEnvelope <span class="ot">=</span> envelope envelopeConfig <span class="fl">0.8</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>          envelopeConfig <span class="ot">=</span> <span class="dt">Envelope</span> { _attackDuration <span class="ot">=</span> <span class="fl">0.1</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>                                    , _decayDuration <span class="ot">=</span> <span class="fl">0.05</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>                                    , _sustainLevel <span class="ot">=</span> <span class="fl">0.8</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>                                    , _releaseDuration <span class="ot">=</span> <span class="fl">0.1</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>                                    }</span></code></pre></div>
+            <p>Isso pode parecer besta, mas na realidade evita uma operação <code>++</code> que é custosa em haskel, já que a implementação de lista é uma lista encadeada simples, então o operador de concatenação <code>++</code> executa em <span class="math inline">\(O(n)\)</span>.</p>
+            <p>Você já deve ter imaginado que se somarmos duas ondas de tons diferentes ao mesmo tempo, teremos um acorde! A única questão é que é preciso ter cuidado na hora de somar essas notas para não exceder o limite: a onda final ainda tem que ser composta de valores <span class="math inline">\(\in [-1, 1]\)</span> .</p>
+            <h2 id="escrevendo-um-arquivo-.wav">Escrevendo um arquivo .wav</h2>
+            <p>Vamos fazer uma pequena pausa e um desvio para entender como podemos escrever esses sons num arquivo de áudio mais convencional que poderia ser reproduzido por um aplicativo de som qualquer. Um dos formatos de áudio é o formato <code>.wav</code> e ele possui suporte a alguns tipos de codificação, inclusive a codificação em floats de 32 bits little-endian o que facilita muito a nossa vida.</p>
+            <p>Todo arquivo <code>.wav</code> começa com um cabeçalho que contém algumas informações sobre o tipo do arquivo, tamanho do arquivo, etc. Depois seguem algumas seções que descrevem o <em>bitrate</em>, <em>sample rate</em> e número de samples, etc. Nada muito relevante. De fato esse formato de arquivo é literalmente os dados brutos que estávamos gerando precedidos de um cabeçalho pequeno. O código que segue escreve os dados num arquivo.</p>
+            <div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ot">writeWAV ::</span> <span class="dt">FilePath</span> <span class="ot">-&gt;</span> [<span class="dt">Float</span>] <span class="ot">-&gt;</span> <span class="dt">IO</span> ()</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>writeWAV path wave <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> bytes <span class="ot">=</span> Bytes.toStrict <span class="op">$</span> Bytes.toLazyByteString</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>                                    <span class="op">$</span> toBytesBuilder wave</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> datasize <span class="ot">=</span> Bytes.length bytes</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> fsize <span class="ot">=</span> <span class="dv">44</span> <span class="co">{- header size -}</span> <span class="op">+</span> <span class="fu">fromIntegral</span> datasize</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> numSamples <span class="ot">=</span> <span class="fu">fromIntegral</span> datasize <span class="ot">`div`</span> <span class="dv">4</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> header <span class="ot">=</span> Bytes.byteString <span class="st">&quot;RIFF&quot;</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&gt;</span> Bytes.int32LE (fsize <span class="op">-</span> <span class="dv">8</span>)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&gt;</span> Bytes.byteString <span class="st">&quot;WAVE&quot;</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&gt;</span> Bytes.byteString <span class="st">&quot;fmt &quot;</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>                 <span class="co">-- Size of the rest of the subchunk following this number</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&gt;</span> Bytes.int32LE <span class="dv">16</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>                 <span class="co">-- Format flag: floating point</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&gt;</span> Bytes.int16LE <span class="dv">3</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>                 <span class="co">-- Number of channels</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&gt;</span> Bytes.int16LE <span class="dv">1</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&gt;</span> Bytes.int32LE sampleRate</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>                 <span class="co">-- SampleRate * NumChannels * BitsPerSample/8</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&gt;</span> Bytes.int32LE (sampleRate <span class="op">*</span> bitsPerSample <span class="ot">`div`</span> <span class="dv">8</span>)</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>                 <span class="co">-- NumChannels * BitsPerSample/8</span></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&gt;</span> Bytes.int16LE (bitsPerSample <span class="ot">`div`</span> <span class="dv">8</span>)</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&gt;</span> Bytes.int16LE bitsPerSample</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&gt;</span> Bytes.byteString <span class="st">&quot;fact&quot;</span></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>                 <span class="co">-- Size of the rest of the subchunk following this number</span></span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&gt;</span> Bytes.int32LE <span class="dv">4</span></span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>                 <span class="co">-- Number of sample frames</span></span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&gt;</span> Bytes.int32LE numSamples</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&gt;</span> Bytes.byteString <span class="st">&quot;data&quot;</span></span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>                 <span class="co">-- NumSamples * NumChannels * BitsPerSample/8</span></span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>              <span class="op">&lt;&gt;</span> Bytes.int32LE (numSamples <span class="op">*</span> bitsPerSample <span class="ot">`div`</span> <span class="dv">8</span>)</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>    withFile path <span class="dt">WriteMode</span> <span class="op">$</span> \h <span class="ot">-&gt;</span> <span class="kw">do</span></span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>        Bytes.hPutBuilder h header</span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>        Bytes.hPut h bytes</span></code></pre></div>
+            <p>Por fim, basta mudar a <code>main</code> para</p>
+            <div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>main <span class="ot">=</span> writeWAV <span class="st">&quot;sound.wav&quot;</span> (toBytesBuilder samples)</span></code></pre></div>
+            <p>e pronto! Já dá pra ouvir o som com qualquer programa tradicional de áudio.</p>
+            <h2 id="reatividade">Reatividade</h2>
+            <p>Até agora vimos somente formas muito estáticas de trabalhar com behaviours. Podemos combinar diferentes tipos de behaviours e criar novos, mas esse ainda não é um sistema poderoso o suficiente para receber dados de um usuário e produzir sons de acordo com ele. Para isso é necessário introduzir outro conceito: os eventos. Um evento, é análogo a uma lista de pares tempo-valor</p>
+            <div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Event</span> a <span class="ot">=</span> [(<span class="dt">Time</span>, a)] <span class="co">-- Tempos ordenados em ordem crescente</span></span></code></pre></div>
+            <p>É possível ter diversos eventos que ocorrem no mesmo momento ou ter um grande intervalo entre eventos. Os eventos são como ocorrências discretas no tempo. Elas não possuem “infinita resolução” assim como os <em>behaviours</em>. Eles são justamente o que permite a interação com o mundo externo, imagine um <code>Event KeyEvent</code> onde <code>KeyEvent</code> poderia notificar qual tecla foi pressionada ou solta pelo usuário.</p>
+            <p>Assim como podemos combinar <em>behaviours</em>, também há formas de combinar <em>events</em>, vamos olhar a algumas dessas formas</p>
+            <div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Faz um _merge_ dos eventos, intercalando os que vem primeiro antes</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- das ocorrências posteriores</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="ot">(.|.) ::</span> <span class="dt">Event</span> a <span class="ot">-&gt;</span> <span class="dt">Event</span> a <span class="ot">-&gt;</span> <span class="dt">Event</span> a</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>[] <span class="op">.|.</span> ys <span class="ot">=</span> ys</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>xs <span class="op">.|.</span> [] <span class="ot">=</span> xs</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>((tx, x) <span class="op">:</span> xs) <span class="op">.|.</span> ((ty, y) <span class="op">:</span> ys)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> tx <span class="op">&lt;=</span> ty <span class="ot">=</span> (tx, x) <span class="op">:</span> (xs <span class="op">.|.</span> ((ty, y) <span class="op">:</span> ys))</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> (ty, y) <span class="op">:</span> (((tx, x) <span class="op">:</span> xs) <span class="op">.|.</span> ys)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="co">-- Grava o valor do behaviour no momento em que o evento ocorre</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="ot">snapshot ::</span> <span class="dt">Behaviour</span> b <span class="ot">-&gt;</span> <span class="dt">Event</span> a <span class="ot">-&gt;</span> <span class="dt">Event</span> (a, b)</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>snapshot _ [] <span class="ot">=</span> []</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>snapshot b ((te, e) <span class="op">:</span> es) <span class="ot">=</span> (te, (e, b te)) <span class="op">:</span> snapsnot b es</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a><span class="co">-- Esse é a função mais importante de todas, ela é quem realmente</span></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="co">-- permite a reatividade. Ela toma como argumento um behaviour</span></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a><span class="co">-- padrão e um evento (lista) de behaviours e retorna outro behaviour</span></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a><span class="co">-- que é atua como o behaviour do último evento ocorrido ou como o</span></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="co">-- padrão se não ouveram eventos antes desse momento.</span></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a><span class="ot">switcher ::</span> <span class="dt">Behaviour</span> a <span class="ot">-&gt;</span> <span class="dt">Event</span> (<span class="dt">Behaviour</span> a) <span class="ot">-&gt;</span> <span class="dt">Behaviour</span> a</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>switcher b events t <span class="ot">=</span> <span class="fu">last</span> (b <span class="op">:</span> before) t</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">where</span>  <span class="co">-- Eventos que ocorrem antes de `t`</span></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>           before <span class="ot">=</span> [e <span class="op">|</span> (te, e) <span class="ot">&lt;-</span> events, te <span class="op">&lt;</span> t]</span></code></pre></div>
+            <p>Com isso, já podemos definir melhor como mudar de notas, podemos ter um evento que representa quando queremos que cada nota seja tocada. Daí, usamos um <code>switcher</code> para trocar entre elas!</p>
+            <div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>notesToPlay <span class="ot">=</span> []</span></code></pre></div>
+            <h2 id="to-be-continued">To be continued…</h2>
+        </main>
+    </body>
+</html>

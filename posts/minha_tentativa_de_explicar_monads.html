@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-br" xml:lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Gabriel Dertoni" />
+  <meta name="keywords" content="typescript, funcional" />
+  <title>Minha Tentativa de Explicar Monads</title>
+  <style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+</style>
+  <style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+div.sourceCode
+{ color: #ebdbb2; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span { color: #ebdbb2; } 
+code span.al { color: #282828; background-color: #cc241d; font-weight: bold; } 
+code span.an { color: #98971a; } 
+code span.at { color: #d79921; } 
+code span.bn { color: #f67400; } 
+code span.bu { color: #d65d0e; } 
+code span.cf { color: #cc241d; font-weight: bold; } 
+code span.ch { color: #b16286; } 
+code span.cn { color: #b16286; font-weight: bold; } 
+code span.co { color: #928374; } 
+code span.cv { color: #928374; } 
+code span.do { color: #98971a; } 
+code span.dt { color: #d79921; } 
+code span.dv { color: #f67400; } 
+code span.er { color: #cc241d; text-decoration: underline; } 
+code span.ex { color: #689d6a; font-weight: bold; } 
+code span.fl { color: #f67400; } 
+code span.fu { color: #689d6a; } 
+code span.im { color: #689d6a; } 
+code span.in { color: #282828; background-color: #83a598; } 
+code span.kw { color: #ebdbb2; font-weight: bold; } 
+code span.op { color: #ebdbb2; } 
+code span.ot { color: #689d6a; } 
+code span.pp { color: #d65d0e; } 
+code span.re { color: #928374; background-color: #1d2021; } 
+code span.sc { color: #b16286; } 
+code span.ss { color: #98971a; } 
+code span.st { color: #98971a; } 
+code span.va { color: #458588; } 
+code span.vs { color: #848216; } 
+code span.wa { color: #282828; background-color: #fabd2f; } 
+</style>
+  <style type="text/css">@import url('https://fonts.googleapis.com/css2?family=Fira+Code&family=Inter&display=swap')</style>
+  <style type="text/css">:root {
+--bg: #282828;
+--bg0-h: #1d2021;
+--bg0-s: #32302f;
+--bg0: #282828;
+--bg1: #3c3836;
+--bg2: #504945;
+--bg3: #665c54;
+--bg4: #7c6f64;
+--fg: #ebdbb2;
+--fg0: #fbf1c7;
+--fg1: #ebdbb2;
+--fg2: #d5c4a1;
+--fg3: #bdae93;
+--fg4: #a89984;
+--dark-red: #cc241d;
+--dark-green: #98971a;
+--dark-yellow: #d79921;
+--dark-orange: #d65d0e;
+--dark-blue: #458588;
+--dark-purple: #b16286;
+--dark-aqua: #689d6a;
+--dark-grey: #a89984;
+--light-red: #fb4934;
+--light-green: #b8bb26;
+--light-yellow: #fabd2f;
+--light-orange: #fe8019;
+--light-blue: #83a598;
+--light-purple: #d3869b;
+--light-aqua: #8ec07c;
+--light-grey: #928374;
+--top-bar-bg-color: var(--fg0);
+--top-bar-fg-color: var(--bg0-h);
+--nav-bar-link-color: var(--fg0);
+--nav-bar-link-hover-color: var(--light-orange);
+--main-text-color: var(--fg);
+--title-color: var(--light-aqua);
+--section-color: var(--light-blue);
+--link-color: var(--dark-blue);
+--link-hover-color: var(--light-blue);
+--inline-code-color: var(--light-orange);
+--inline-code-bg-color: var(--bg1);
+--code-bg-color: var(--bg1);
+--content-width: 800px;
+--keywords-color: var(--fg4);
+--article-list-bg-color: var(--bg1);
+--article-list-fg-color: var(--light-aqua);
+--author-color: var(--dark-aqua);
+}
+::-webkit-scrollbar-thumb {
+border-radius: 10px;
+
+background-color: #0f0f0f;
+}
+::-webkit-scrollbar {
+width: 12px;
+height: 12px;
+background-color: #282828;
+}
+::-webkit-scrollbar-track {
+-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+border-radius: 10px;
+background-color: #282828;
+}
+body {
+padding: 2em;
+font-size: 1rem;
+padding-top: 0;
+background-color: #282828;
+color: var(--main-text-color);
+font-family: 'Fira Code', monospace;
+font-variant-ligatures: normal;
+display: flex;
+flex-flow: column nowrap;
+align-items: center;
+}
+header {
+width: 100%;
+display: flex;
+flex-flow: column nowrap;
+align-items: center;
+}
+a {
+color: var(--link-color);
+transition: color ease-in 100ms;
+font-weight: 600;
+}
+a:hover {
+color: var(--link-hover-color);
+}
+h1 {
+color: var(--title-color);
+}
+h1.title {
+margin-bottom: .3em;
+}
+h1::after {
+content: '';
+display: block;
+width: 100%;
+border-bottom: solid 3px;
+}
+h2 {
+color: var(--section-color);
+}
+code {
+padding: 1px 6px;
+border-radius: 3px;
+color: var(--inline-code-color);
+background-color: var(--inline-code-bg-color);
+font-family: 'Fira Code';
+font-variant-ligatures: normal;
+}
+code:not(.sourceCode) {
+font-size: .8em;
+}
+pre code {
+padding: 0;
+border-radius: 0;
+color: var(--main-text-color);
+background-color: transparent;
+font-size: 1em;
+font-weight: normal;
+}
+pre.sourceCode {
+padding: 1em;
+background-color: var(--code-bg-color);
+border-radius: 5px;
+overflow: auto;
+font-size: .9em;
+}
+p {
+text-align: justify;
+}
+.text-underline {
+text-decoration: underline;
+}
+.text-ligatures {
+font-variant-ligatures: normal;
+}
+.text-hide {
+display: none;
+}
+.list-title {
+margin-bottom: 0;
+}
+.list-title ~ ul {
+margin-top: 0;
+}
+.width-content {
+width: var(--content-width);
+}
+.no-bottom-margin {
+margin-bottom: 0;
+}
+#top-bar {
+width: 100%;
+padding: .5em;
+background-color: var(--top-bar-bg-color);
+color: var(--top-bar-fg-color);
+display: flex;
+flex-flow: row nowrap;
+justify-content: center;
+}
+.blog-title {
+text-transform: uppercase;
+font-weight: bold;
+}
+#menu ul {
+padding: 0;
+display: flex;
+flex-flow: row nowrap;
+justify-content: flex-start;
+gap: 2rem;
+}
+#menu ul li {
+list-style: none;
+}
+#menu ul li a {
+color: var(--nav-bar-link-color);
+transition: color ease-in 100ms;
+}
+#menu ul li a:hover {
+color: var(--nav-bar-link-hover-color);
+}
+.keywords > ul {
+margin-top: 0;
+display: flex;
+flex-flow: row nowrap;
+gap: 1em;
+padding: 0;
+color: var(--keywords-color);
+}
+.keywords > ul > li {
+list-style: none;
+}
+.article-list > ul {
+display: flex;
+flex-flow: column nowrap;
+gap: 1em;
+padding: 0;
+}
+.article-list > ul > li {
+padding: 0 1em;
+background-color: var(--article-list-bg-color);
+list-style: none;
+}
+.article-list > ul > li a {
+font-variant-ligatures: normal;
+color: var(--article-list-fg-color);
+}
+.article-title {
+color: var(--title-color);
+}
+.article-title::after {
+content: '';
+display: block;
+width: 100%;
+border-bottom: solid 3px;
+}
+.author {
+color: var(--author-color);
+margin-top: .3em;
+}
+@media screen and (max-width: 1000px) {
+.width-content {
+width: calc(100% - 1rem);
+}
+body {
+padding: 0;
+font-size: .8rem;
+}
+}
+</style>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+</head>
+    <body>
+        <header>
+            <div id="top-bar">
+                <div class="width-content">
+                    <div class="blog-title">Gabriel Dertoni</div>
+                </div>
+            </div>
+            <nav class="width-content" id="menu">
+                <ul>
+                    <li><a href="/index.html">Index</a></li>
+                    <li><a href="/about.html">About</a></li>
+                </ul>
+            </nav>
+        </header>        <main class="width-content">
+            <div id="title-block-header">
+                <h1 class="title">Minha Tentativa de Explicar <em>Monads</em></h1>
+                <div class="keywords">
+                    <ul>
+                                                <li>#typescript</li>
+                                                <li>#funcional</li>
+                                            </ul>
+                </div>
+                <div class="authors">
+                    <!-- Puts "Escrito por" when `lang-pt` is set and "Authored by" when `lang-en` is set -->
+                    <p class="author"> Gabriel Dertoni</p>
+                </div>
+            </div>
+            <nav id="TOC">
+                <!-- Puts "Conteúdo" when `lang-pt` is set and "Contents" when `lang-en` is set -->
+                <p class="list-title text-underline">Conteúdo:</p>
+                <ul>
+                <li><a href="#a-falácia-dos-tutorias-de-monad" id="toc-a-falácia-dos-tutorias-de-monad">A falácia dos tutorias de <em>monad</em></a></li>
+                <li><a href="#enfim-o-que-são-monads" id="toc-enfim-o-que-são-monads">Enfim, o que são <em>monads</em></a></li>
+                <li><a href="#o-monad-option" id="toc-o-monad-option">O Monad <code>Option</code></a></li>
+                <li><a href="#o-monad-result" id="toc-o-monad-result">O Monad <code>Result</code></a></li>
+                <li><a href="#abstraindo-o-conceito-de-monad" id="toc-abstraindo-o-conceito-de-monad">Abstraindo o conceito de <em>monad</em></a></li>
+                <li><a href="#as-propriedades-que-todo-monad-deve-ter" id="toc-as-propriedades-que-todo-monad-deve-ter">As propriedades que todo <em>monad</em> deve ter</a>
+                <ul>
+                <li><a href="#uma-pequena-tangente-sobre-associatividade" id="toc-uma-pequena-tangente-sobre-associatividade">Uma pequena tangente sobre associatividade</a></li>
+                </ul></li>
+                <li><a href="#mais-monads-asyncawait-em-betterscript" id="toc-mais-monads-asyncawait-em-betterscript">Mais monads, async/await em BetterScript</a></li>
+                <li><a href="#o-monad-de-não-determinismo" id="toc-o-monad-de-não-determinismo">O <em>Monad</em> de não determinismo</a></li>
+                <li><a href="#conclusão" id="toc-conclusão">Conclusão</a></li>
+                <li><a href="#apêndice" id="toc-apêndice">Apêndice</a>
+                <ul>
+                <li><a href="#como-betterscript-pode-lidar-com-loops" id="toc-como-betterscript-pode-lidar-com-loops">Como BetterScript pode lidar com loops</a></li>
+                <li><a href="#transformação-passo-a-passo" id="toc-transformação-passo-a-passo">Transformação passo-a-passo</a></li>
+                </ul></li>
+                </ul>
+            </nav>
+            <p>O conceito de Mônadas, ou <em>Monads</em> é muito recorrente em programação funcional e uma das abstrações mais poderosas do paradigma. Entretanto, entender o que essa abstração sigifica geralmente não se mostra como uma tarefa fácil. Justamente por esse motivo, existem inúmeras tentativas de explicar <em>monads</em> na internet e, apesar disso, ainda é um tópico difícil de entender para novatos do paradigma funcional.</p>
+            <h2 id="a-falácia-dos-tutorias-de-monad">A falácia dos tutorias de <em>monad</em></h2>
+            <p>Um dos problemas recorrentes em tutorias que tentam explicar <em>monads</em> se deve à falácia dos tutorias de <em>monad</em><a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a> que, em resumo, ocorre quando alguém tenta explicar <em>monads</em> usando uma analogia qualquer que tenha feito tudo “clicar” para si. Após ter gastado muito tempo tentando entender o conceito, o autor finalmente entendeu e agora tudo parece tão óbvio. Se ele somente tivesse pensando nessa analogia antes! E assim o autor prossegue a escrever sobre sua “analogia perfeita” que, na realidade, somente funciona para si, por conta de todo o tempo que o autor já gastou tentando entender o conceito. Por conta disso, não ajuda pessoas completamente novas ao ele. Até virou piada comparar <em>monads</em> a qualquer coisa, como burritos<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>, fazendo referência a esse fenômeno tão comum em tentativas de explicar o conceito de <em>monad</em>.</p>
+            <p>Eu certamente acredito nessa falácia e já li posts e assisti palestras nos quais <em>monads</em> são comparados a coisas como trilhos de trem<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a><a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a>, entre outros. E o sentimento geral que fica ao consumir esses recursos é que não captura completamente o conceito, mas tenta demonstrar aplicações práticas de <em>monads</em>. E honestamente, isso faz muito sentido. Muitas pessoas, assim como eu, tem dificuldade em compreender algo abstrato logo de cara. Ao invés disso, precisamos de diversos exemplos e experiência própria para compreender por que determinadas abstrações fazem sentido.</p>
+            <p>Do outro lado do expectro, temos os teóricos que explicam <em>monads</em> em termos matemáticos e utilizam teoria das categorias para suas explicações. Daí veio outra piada, “<em>a monad is a monoid in the category of endofunctors, what’s the problem?</em>”<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a> que captura esse lado insanamente abstrato em torno do conceito de <em>monads</em> que só pode ser compreendido por quem já compreende muito bem todo um imenso contexto matemático. E talvez o conceito matemático, quando verdadeiramente compreendido, realmente capture de maneira mais completa o que são <em>monads</em>. Dito isso, eu certamente não possuo esse contexto todo matemático e entendo muito pouco dessa parte. Apesar disso, sou capaz de pensar sobre <em>monads</em> de maneira suficiente para entender quando são utilizados e também criar meus próprios <em>monads</em> de vez em quando.</p>
+            <p>Portanto, aqui vai um aviso. Eu não sou expert nem nada do tipo no assunto. Não tenho o fundamento matemático para compreender tudo que envolve a definição de <em>monad</em> e nem garanto que vou ser bem sucedido em explicar <em>monads</em> onde tantos falharam. Apesar disso, gosto de tentar explicar as coisas que aprendo para eu mesmo entender melhor e, com sorte, de bônus conseguirei ajudar alguém! Dito isso, vamos ao que interessa!</p>
+            <h2 id="enfim-o-que-são-monads">Enfim, o que são <em>monads</em></h2>
+            <blockquote>
+            <p>Um <em>monad</em> é uma forma de abstrair (controlar de maneira modularizada) a composição de operações que possuem algum efeito. Assim, eles escondem do usuário da abstração os detalhes específicos de como tratar esses “efeitos”.</p>
+            </blockquote>
+            <p>Primeiramente vale notar que essa é uma explicação bem centrada em programadores e não em matemáticos. Ela foca no porquê de usar <em>monads</em> e não em sua definição real. Nas próximas seções vamos “descobrir” aos poucos as operações e restrições que de fato definem um <em>monad</em> e como elas permitem o tipo de abstração mencionada e porquê isso importa.</p>
+            <p>Provavelmente a explicação acima deixou o leitor ainda mais confuso já que ela parece vaga e abstrata. Na realidade, para mim aprender sobre <em>monads</em> foi um processo similar ao processo de entender ponteiros pela primeira vez. Quando aprendemos pela primeira vez sobre ponteiros, sua definição é muito simples “um ponteiro é um endereço de memória”. Mas apesar de sua simplicidade, parecem notavelmente difíceis de se entender, “o que significa um ponteiro de pointeiro?”, “qual a diferença de <code>int*</code> para <code>int</code>” e coisas similares. Quando finalmente entendi ponteiros tive o meu momento “aha, ponteiros são só entedereços de memória!”. Ou seja, no momento que o conceito “clicou” para mim, a minha mente repetia exatamente a definição que antes não fazia sentido algum. É inegável que ponteiros são fundamentais e importantes. Usamos ponteiros para construção de listas encadeadas, árvores, grafos, ponteiros de ponteiros para matrizes, ponteiros para passagem por referência, ponteiros para retornar mais de um valor de uma função, ponteiros para tipos abstratos de dados, enfim, ponteiros para tudo. Similarmente <em>monads</em> são usados para implementar variáveis globais, mutabilidade, async/await, não determinismo, input output, exceções, goto e muitas outras coisas em linguagens que começaram sem nada disso.</p>
+            <p>Enfim, vou tentar justificar a explicação acima com alguns exemplos e no meio através deles explicar melhor o que eu quero dizer com “efeitos”, “controlar de maneira modularizada” ou “composição”. As seções seguintes são alguns exemplos de onde podemos usar <em>monads</em> e como os exemplos se relaicionam com a definição. A dura realidade é que esse conceito não é simples o suficiente para entender tudo somente com uma “analogia perfeita”. Precisamos de exemplos diversos, experiência e um pouco de sofrimento para entender.</p>
+            <h2 id="o-monad-option">O Monad <code>Option</code></h2>
+            <p>Um caso particularmente simples e comum em tutorias de <em>monads</em> é um tipo opcional. Digamos que uma função pode ou retornar um valor, indicando uma operação bem sucedida, ou retornar outra coisa representando que alguma falha aconteceu. Em TypeScript isso poderia ser descrito assim</p>
+            <div class="sourceCode" id="cb1"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">safeParseFloat</span>(s<span class="op">:</span> <span class="dt">string</span>)<span class="op">:</span> <span class="dt">number</span> <span class="op">|</span> <span class="dt">undefined</span> {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> n <span class="op">=</span> <span class="pp">parseFloat</span>(s)<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="pp">isNaN</span>(n)) <span class="cf">return</span> <span class="kw">undefined</span><span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> n<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>para melhorar um pouco o código, podemos notar que o padrão <code>Type | undefined</code> se torna uma coisa bem comum e daí podemos criar um tipo só para isso</p>
+            <div class="sourceCode" id="cb2"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Option<span class="op">&lt;</span>T<span class="op">&gt;</span> <span class="op">=</span> T <span class="op">|</span> <span class="dt">undefined</span><span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">safeParseFloat</span>(s<span class="op">:</span> <span class="dt">string</span>)<span class="op">:</span> Option<span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span> { <span class="co">/*...*/</span> }</span></code></pre></div>
+            <p>beleza, a próxima coisa que gostaríamos de fazer é dividir dois números. Entretanto, divisão de dois números pode dar problema se o denominador for <code>0</code>. Então só para tratar esse caso, podemos usar nosso tipo <code>Option</code> novamente</p>
+            <div class="sourceCode" id="cb3"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">safeDiv</span>(nom<span class="op">:</span> <span class="dt">number</span><span class="op">,</span> denom<span class="op">:</span> <span class="dt">number</span>)<span class="op">:</span> Option<span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span> {</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (denom <span class="op">==</span> <span class="dv">0</span>) <span class="cf">return</span> <span class="kw">undefined</span><span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> nom <span class="op">/</span> denom<span class="op">;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>maravilha, agora para implementar digamos, uma calculadora, queremos ler dois números fornecidos pelo usuário como <code>string</code> e tentar dividir eles</p>
+            <div class="sourceCode" id="cb4"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">evalDiv</span>(nom<span class="op">:</span> <span class="dt">string</span><span class="op">,</span> denom<span class="op">:</span> <span class="dt">string</span>)<span class="op">:</span> Option<span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span> {</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> optNom <span class="op">=</span> <span class="fu">safeParseFloat</span>(nom)<span class="op">;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (optNom <span class="op">===</span> <span class="kw">undefined</span>) <span class="cf">return</span> <span class="kw">undefined</span><span class="op">;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">// From now on, TypeScript knows that `optNom` is `number`.</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> optDenom <span class="op">=</span> <span class="fu">safeParseFloat</span>(denom)<span class="op">;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (optDenom <span class="op">===</span> <span class="kw">undefined</span>) <span class="cf">return</span> <span class="kw">undefined</span><span class="op">;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// From now on, TypeScript knows that `optDenom` is `number`.</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">safeDiv</span>(optNom<span class="op">,</span> optDenom)<span class="op">;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>Ok, isso funciona. Entretanto, algo nesse código incomoda… É o fato de que temos que constantemente fazer esse <code>if (variable === undefined) return undefined;</code> (algumas linguagens, como Go forçam o desenvolvedor a salpicar esse tipo de coisa por todo canto). Nesse exemplo simples não é problema, já que são só duas variáveis, mas não é difícil imaginar que para casos mais complexos, pode ser tedioso e sujeito a falhas. A questão aqui é que a função <code>evalDiv</code> teve que se preocupar em tratar os casos onde as <code>string</code>s são inválidas. Mas a função <code>evalDiv</code> tem a ver com divisão, não com tratamento de strings mal formatadas e, por isso, precisar tratar isso manualmente toda vez é ruim. Uma forma de resolver esse problema é criar uma outra função que contém justamente essa abstração</p>
+            <div class="sourceCode" id="cb5"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">andThen</span><span class="op">&lt;</span>A<span class="op">,</span> B<span class="op">&gt;</span>(opt<span class="op">:</span> Option<span class="op">&lt;</span>A<span class="op">&gt;,</span> action<span class="op">:</span> (value<span class="op">:</span> A) <span class="kw">=&gt;</span> Option<span class="op">&lt;</span>B<span class="op">&gt;</span>)<span class="op">:</span> Option<span class="op">&lt;</span>B<span class="op">&gt;</span> {</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (opt <span class="op">===</span> <span class="kw">undefined</span>) <span class="cf">return</span> <span class="kw">undefined</span><span class="op">;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// From now on, TypeScript knows that `opt` is `A`.</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">action</span>(opt)<span class="op">;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>repare que essa função engloba justamente a abstração que estávamos mencionando e nada mais. Reescrevendo <code>evalDiv</code> ficaria assim</p>
+            <div class="sourceCode" id="cb6"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">evalDiv</span>(nom<span class="op">:</span> <span class="dt">string</span><span class="op">,</span> denom<span class="op">:</span> <span class="dt">string</span>)<span class="op">:</span> Option<span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span> {</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">andThen</span>(</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        <span class="fu">safeParseFloat</span>(nom)<span class="op">,</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>        nomNumber <span class="kw">=&gt;</span> <span class="fu">andThen</span>(</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>            <span class="fu">safeParseFloat</span>(denom)<span class="op">,</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>            denomNumber <span class="kw">=&gt;</span> <span class="fu">safeDiv</span>(nomNumber<span class="op">,</span> denomNumber)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    )<span class="op">;</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>Agora sim, ignorando o <code>andThen</code>, a função <code>evalDiv</code> trata somente o que importa para ela. Mas isso não é muito ergonômico, ter que ficar usando <code>andThen</code> o tempo todo, um dentro do outro… Talvez possamos fazer melhor! Bem em TypeScript estamos limitados ao que a linguagem nos permite fazer, mas vamos imaginar uma prima do TypeScript que possui uma sintaxe adicional para esse tipo de coisa. Toda vez que a linguagem encontra uma linha do tipo</p>
+            <div class="sourceCode" id="cb7"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> variable <span class="op">&lt;-</span> <span class="fu">someFunction</span>(arg1<span class="op">,</span> arg2)<span class="op">;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">/* ... rest of function body ... */</span></span></code></pre></div>
+            <p>ela reescreve para o seguinte código TypeScript</p>
+            <div class="sourceCode" id="cb8"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> <span class="fu">andThen</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">someFunction</span>(arg1<span class="op">,</span> arg2)<span class="op">,</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    variable <span class="kw">=&gt;</span> {</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>        <span class="co">/* ... rest of function body ... */</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>)<span class="op">;</span></span></code></pre></div>
+            <p>vamos chamar essa nova linguagem de <a href="https://swc-playground-better-script.vercel.app/">BetterScript</a> (o link é uma forma simples de traduzir essa linguagem para TypeScript). Assim, o código anterior para <code>evalDiv</code> em BetterScript seria</p>
+            <div class="sourceCode" id="cb9"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">evalDiv</span>(nom<span class="op">:</span> <span class="dt">string</span><span class="op">,</span> denom<span class="op">:</span> <span class="dt">string</span>)<span class="op">:</span> Option<span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span> {</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> nomNumber <span class="op">&lt;-</span> <span class="fu">safeParseFloat</span>(nom)<span class="op">;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> denomNumber <span class="op">&lt;-</span> <span class="fu">safeParseFloat</span>(denom)<span class="op">;</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">safeDiv</span>(nomNumber<span class="op">,</span> denomNumber)<span class="op">;</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>Muito melhor! Abstraímos completamente todo o “overhead” mental de ter que tratar erros irrelevantes para a função <code>evalDiv</code> de maneira que ela só se preocupa exatamente com o que importa para ela.</p>
+            <p>Com isso, acabamos de descobrir a primeira operação fundamental que todo <em>monad</em> precisa definir, a função <code>andThen</code>. Ela é as vezes chamada de <code>bind</code> ou sua prima <code>join</code> (que possui uma assinatura similar mas não idêntica, mas pode ser escrita usando <code>andThen</code>). A relação dessa função com a nossa definição inicial é que a função <code>andThen</code> é justamente uma abstração que atua sobre a composição de operações. A “composição” aqui se refere à sequência de operações que queríamos fazer. A função <code>evalDiv</code> queria primeiro performar <code>safeParseFloat(nom)</code> e então <code>safeParseFloat(denom)</code> e por fim <code>safeDiv(nomNumber, denomNumber)</code> e essa sequência é o que chamamos de composição dessas funções.</p>
+            <p>Então, até agora como vimos um <em>monad</em> é algum tipo, no exemplo, <code>Option&lt;A&gt;</code> que possui uma operação associada a ele, <code>andThen</code> que combina um valor <code>Option&lt;A&gt;</code> (possivelmente resultante de outra operação) com uma operação que atua sobre esse <code>A</code> de maneira abstraída (não precisa considerar o caso <code>undefined</code>) e essa operação pode em si retornar outra <code>Option&lt;B&gt;</code>. A função <code>andThen</code> é o mecanismo fundamental que permite a composição de duas operações que possuem efeitos. Sendo que “efeitos” se refere ao tipo <code>Option</code> em si. Ele é um efeito no sentido de que a função <code>evalDiv</code> não se importa com <code>Option</code>, ela se importa em dividir números e, nesse sentido, <code>Option</code> é como um “efeito colateral”.</p>
+            <h2 id="o-monad-result">O Monad <code>Result</code></h2>
+            <p>Um outro <em>monad</em> muito similar ao <code>Option</code>, é o <code>Result</code>. Para entender a motivação por trás de seu uso, digamos que a nossa calculadora está pronta mas os usuários reclamam que quando estão tentando dividir números e ocorre algum problema, isso acarreta em <code>undefined</code> e não é nada claro qual problema pode ter ocorrido. As vezes uma string usada não era um número válido, as vezes o denominador era <code>0</code>, mas como em todos esses casos o resultado de <code>evalDiv</code> é <code>undefined</code> não dá pra saber qual erro de fato ocorreu e porquê.</p>
+            <p>Para consertar isso, podemos definir um segundo tipo em BetterScript</p>
+            <div class="sourceCode" id="cb10"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Result<span class="op">&lt;</span>T<span class="op">,</span> <span class="cn">E</span><span class="op">&gt;</span> <span class="op">=</span> {</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    type<span class="op">:</span> <span class="st">&quot;success&quot;</span><span class="op">,</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    value<span class="op">:</span> T<span class="op">,</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>} <span class="op">|</span> {</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    type<span class="op">:</span> <span class="st">&quot;error&quot;</span><span class="op">,</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    value<span class="op">:</span> <span class="cn">E</span><span class="op">,</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div>
+            <p>daí para propagar mensagens de erro nas nossas funções podemos usar <code>Result&lt;number, string&gt;</code>. De maneira muito similar à <code>Option</code>, podemos definir a função <code>andThen</code></p>
+            <div class="sourceCode" id="cb11"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">andThen</span><span class="op">&lt;</span>A<span class="op">,</span> B<span class="op">&gt;</span>(result<span class="op">:</span> Result<span class="op">&lt;</span>A<span class="op">,</span> <span class="dt">string</span><span class="op">&gt;,</span> action<span class="op">:</span> (value<span class="op">:</span> A) <span class="kw">=&gt;</span> Result<span class="op">&lt;</span>B<span class="op">,</span> <span class="dt">string</span><span class="op">&gt;</span>) {</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// If an error, return as is</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (result<span class="op">.</span><span class="at">type</span> <span class="op">===</span> <span class="st">&quot;error&quot;</span>) <span class="cf">return</span> result<span class="op">;</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">// From now on TypeScript knows that `result.type` is `&quot;success&quot;` and</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">// that `result.value` is `A`.</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">action</span>(result<span class="op">.</span><span class="at">value</span>)<span class="op">;</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>também vamos fingir que através de “mágica do compilador”, quando usamos a sintaxe <code>const variable &lt;- someFunction(arg1, arg2)</code> ele escolhe a instância correta de <code>andThen</code> olhando pros tipos até encontrar algo que se encaixa. Daí o resto da reescrita seria algo assim</p>
+            <div class="sourceCode" id="cb12"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">safeParseFloat</span>(s<span class="op">:</span> <span class="dt">string</span>)<span class="op">:</span> Result<span class="op">&lt;</span><span class="dt">number</span><span class="op">,</span> <span class="dt">string</span><span class="op">&gt;</span> {</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> value <span class="op">=</span> <span class="pp">parseFloat</span>(s)<span class="op">;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="pp">isNaN</span>(value)) {</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> {</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>            type<span class="op">:</span> <span class="st">&quot;error&quot;</span><span class="op">,</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>            value<span class="op">:</span> <span class="st">&quot;string is not a valid number&quot;</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>        }<span class="op">;</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> { type<span class="op">:</span> <span class="st">&quot;success&quot;</span><span class="op">,</span> value }<span class="op">;</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">safeDiv</span>(nom<span class="op">:</span> <span class="dt">number</span><span class="op">,</span> denom<span class="op">:</span> <span class="dt">number</span>)<span class="op">:</span> Result<span class="op">&lt;</span><span class="dt">number</span><span class="op">,</span> <span class="dt">string</span><span class="op">&gt;</span> {</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (denom <span class="op">===</span> <span class="dv">0</span>) {</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> {</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>            type<span class="op">:</span> <span class="st">&quot;error&quot;</span><span class="op">,</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>            value<span class="op">:</span> <span class="st">&quot;divide by zero&quot;</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>        }<span class="op">;</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>        type<span class="op">:</span> <span class="st">&quot;success&quot;</span><span class="op">,</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>        value<span class="op">:</span> nom <span class="op">/</span> denom</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>    }<span class="op">;</span></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">evalDiv</span>(nom<span class="op">:</span> <span class="dt">string</span><span class="op">,</span> denom<span class="op">:</span> <span class="dt">string</span>)<span class="op">:</span> Result<span class="op">&lt;</span><span class="dt">number</span><span class="op">,</span> <span class="dt">string</span><span class="op">&gt;</span> {</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> nomNumber <span class="op">&lt;-</span> <span class="fu">safeParseFloat</span>(nom)<span class="op">;</span></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> denomNumber <span class="op">&lt;-</span> <span class="fu">safeParseFloat</span>(denom)<span class="op">;</span></span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">safeDiv</span>(nomNumber<span class="op">,</span> denomNumber)<span class="op">;</span></span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>Okay, talvez aqui seja um bom momento para parar e apreciar o fato de que, com exceção da anotação de tipo (que poderia ser omitida graças a <em>type inference</em>), a definição de <code>evalDiv</code> não mudou em nada! Esse é um dos poderes da abstração, o código se torna agnóstico à mudaças de coisas que não importam para ele. No caso, <code>evalDiv</code> só se importa em dividir números e, portanto, modificar o <em>monad</em> que está propagando erros é transparente para a implementação.</p>
+            <h2 id="abstraindo-o-conceito-de-monad">Abstraindo o conceito de <em>monad</em></h2>
+            <p>Após ver os exemplos acima, podemos notar alguns padrões em comum. Um monad é sempre algum tipo genérico com um parâmetro (no caso <code>Result</code> possui dois argumentos, mas repare que usamos somente <code>Result&lt;T, string&gt;</code>), que possui uma função <code>andThen</code>. Dessa forma, podemos extender ainda mais a BetterScript para poder referir a esses tipos de maneira genérica. Assim, dizemos que um monad é um tipo <code>M&lt;T&gt;</code> (repare que <code>M</code> pode ser qualquer tipo) que possui uma função</p>
+            <div class="sourceCode" id="cb13"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Repare que `M` aqui também é um tipo genérico. Não podemos fazer isso</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co">// em TypeScript já que não tem suporte para higher kinded types.</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Mas em BetterScritp tudo é possível!</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">andThen</span><span class="op">&lt;</span>M<span class="op">,</span> A<span class="op">,</span> B<span class="op">&gt;</span>(ma<span class="op">:</span> M<span class="op">&lt;</span>A<span class="op">&gt;,</span> action<span class="op">:</span> (value<span class="op">:</span> A) <span class="kw">=&gt;</span> M<span class="op">&lt;</span>B<span class="op">&gt;</span>)<span class="op">;</span></span></code></pre></div>
+            <p>Daí, como notamos previamente, a função <code>evalDiv</code> não se importa com o tipo de <em>monad</em> que está atuando, ela é agnostica a isso. Na verdade, no exemplo, quem determina se vai ser utilizado <code>Option</code> ou <code>Result</code> são as funções que de fato se importam com isso: <code>safeParseFloat</code> e <code>safeDiv</code>. Claro, poderíamos generalizar <code>evalDiv</code> passando essas funções como parâmetro. Isso é mais um exercício mental e não muito prático, mas serve de base para usos mais complexos</p>
+            <div class="sourceCode" id="cb14"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Aqui esse &quot;implements&quot; é mais como um pseudocódigo dizendo que M</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co">// é um tipo que possui a função `andThen` apropriada.</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">evalDiv</span><span class="op">&lt;</span>M <span class="kw">implements</span> Monad<span class="op">&gt;</span>(</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    nom<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    denom<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    safeParseFloat<span class="op">:</span> (s<span class="op">:</span> <span class="dt">string</span>) <span class="kw">=&gt;</span> M<span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;,</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    safeDiv<span class="op">:</span> (nom<span class="op">:</span> <span class="dt">number</span><span class="op">,</span> denom<span class="op">:</span> <span class="dt">number</span>) <span class="kw">=&gt;</span> M<span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>)<span class="op">:</span> M<span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span> {</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> nomNumber <span class="op">&lt;-</span> <span class="fu">safeParseFloat</span>(nom)<span class="op">;</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> denomNumber <span class="op">&lt;-</span> <span class="fu">safeParseFloat</span>(denom)<span class="op">;</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">safeDiv</span>(nomNumber<span class="op">,</span> denomNumber)<span class="op">;</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>Isso é bem legal, mas ainda está faltando algo. Em particular, digamos que queremos implementar uma função igualmente genérica chamada <code>addOne</code>.</p>
+            <div class="sourceCode" id="cb15"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">addOne</span><span class="op">&lt;</span>M <span class="kw">implements</span> Monad<span class="op">&gt;</span>(</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    num<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    safeParseFloat<span class="op">:</span> (s<span class="op">:</span> <span class="dt">string</span>) <span class="kw">=&gt;</span> M<span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>)<span class="op">:</span> M<span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span> {</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> numNumber <span class="op">&lt;-</span> <span class="fu">safeParseFloat</span>(num)<span class="op">;</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> numNumber <span class="op">+</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">//     ^^^^^^^^^^^^^~~~ error: has type `number`, but the function</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">//                      must return a value of type `M&lt;number&gt;`.</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>o problema aqui é que na realidade precisamos também de uma outra função, vou chamá-la de <code>wrap</code> que encapsula um valor qualquer dentro de um <em>monad</em>.</p>
+            <div class="sourceCode" id="cb16"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">wrap</span><span class="op">&lt;</span>M<span class="op">,</span> T<span class="op">&gt;</span>(value<span class="op">:</span> T)<span class="op">:</span> M<span class="op">&lt;</span>T<span class="op">&gt;;</span></span></code></pre></div>
+            <p>Essa função é comumente chamada de <code>unit</code>, <code>pure</code>, <code>lift</code> ou <code>return</code> (sim, existe uma função com o nome <code>return</code> em algumas linguagens funcionais onde <code>return</code> não é uma palavra reservada). Com essa função em mãos podemos finalmente escrever <code>addOne</code> corretamente.</p>
+            <div class="sourceCode" id="cb17"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">addOne</span><span class="op">&lt;</span>M <span class="kw">implements</span> Monad<span class="op">&gt;</span>(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    num<span class="op">:</span> <span class="dt">string</span><span class="op">,</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    safeParseFloat<span class="op">:</span> (s<span class="op">:</span> <span class="dt">string</span>) <span class="kw">=&gt;</span> M<span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>)<span class="op">:</span> M<span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span> {</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> numNumber <span class="op">&lt;-</span> <span class="fu">safeParseFloat</span>(num)<span class="op">;</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">wrap</span>(numNumber <span class="op">+</span> <span class="dv">1</span>)<span class="op">;</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>Uma função adicional que geralmente é definida para monads é a chamada <code>map</code>, <code>fmap</code>, ou <code>select</code> que faz uma projeção do tipo genérico do monad para outro tipo. Essa operação pode ser definida completamente em termos de <code>andThen</code> e <code>wrap</code> da seguinte forma</p>
+            <div class="sourceCode" id="cb18"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">map</span><span class="op">&lt;</span>M <span class="kw">implements</span> Monad<span class="op">,</span> A<span class="op">,</span> B<span class="op">&gt;</span>(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    ma<span class="op">:</span> M<span class="op">&lt;</span>A<span class="op">&gt;,</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    f<span class="op">:</span> (value<span class="op">:</span> A) <span class="kw">=&gt;</span> B</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>)<span class="op">:</span> M<span class="op">&lt;</span>B<span class="op">&gt;</span> {</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">andThen</span><span class="op">&lt;</span>M<span class="op">,</span> A<span class="op">,</span> B<span class="op">&gt;</span>(ma<span class="op">,</span> value <span class="kw">=&gt;</span> <span class="fu">wrap</span><span class="op">&lt;</span>M<span class="op">,</span> B<span class="op">&gt;</span>(<span class="fu">f</span>(value)))<span class="op">;</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>Numa linguagem funcional, tipos que possuem essa função <code>map</code> são chamados de <em>functors</em> e daí a afirmação de que todo <em>monad</em> é também um <em>functor</em>.</p>
+            <h2 id="as-propriedades-que-todo-monad-deve-ter">As propriedades que todo <em>monad</em> deve ter</h2>
+            <p>A única coisa que falta para uma definição mais completa de <em>monad</em> são algumas propriedades matemáticas que devem seguir. Isso vem do fato que <em>monads</em> surgiram inicialmente na matemática e somente depois foram introduzidos na computação. Além disso, essas propriedades são importantes, pois garantem comportamentos desejados e evitam surpresas, já que podemos assumir que qualquer monad seguirá algumas leis<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> (como o assunto é matemática, vou escrever em LaTeX):</p>
+            <ul>
+            <li><p>Identidade à esquerda: <span class="math inline">\(\text{andThen}(\text{wrap}(a), f) = f(a)\)</span></p>
+            <div class="sourceCode" id="cb19"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">andThen</span>(<span class="fu">wrap</span>(a)<span class="op">,</span> f) <span class="co">/* is the same as */</span> <span class="fu">f</span>(a)</span></code></pre></div></li>
+            <li><p>Identidade à direita: <span class="math inline">\(\text{andThen}(m,\text{wrap}) = m\)</span></p>
+            <div class="sourceCode" id="cb20"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">andThen</span>(m<span class="op">,</span> wrap) <span class="co">/* is the same as */</span> m</span></code></pre></div></li>
+            <li><p>Associatividade: <span class="math inline">\(\text{andThen}(\text{andThen}(m, g), h) = \text{andThen}(m, \lambda x.\, \text{andThen}(g(x), h))\)</span></p>
+            <div class="sourceCode" id="cb21"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">andThen</span>(<span class="fu">andThen</span>(m<span class="op">,</span> g)<span class="op">,</span> h)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co">/* is the same as */</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="fu">andThen</span>(m<span class="op">,</span> x <span class="kw">=&gt;</span> <span class="fu">andThen</span>(<span class="fu">g</span>(x)<span class="op">,</span> h))</span></code></pre></div></li>
+            </ul>
+            <p>Vale notar que quando utilizo o <span class="math inline">\(=\)</span> da matemática ou “<code>is the same as</code>” significa que a computação é exatamente equivalente e não pode ser observada qualquer diferença. E não que os valores resultantes são iguais quando comparados com algum operador <code>==</code> ou <code>===</code>.</p>
+            <p>Então agora juntando todas as partes, um <em>monad</em> é um tipo <code>M&lt;T&gt;</code> que possui duas funções: <code>andThen</code> e <code>wrap</code> e que segue as três leis: identidade à esquerda e direita e associatividade.</p>
+            <h3 id="uma-pequena-tangente-sobre-associatividade">Uma pequena tangente sobre associatividade</h3>
+            <p>Essa propriedade de associatividade é importante, já que garante que</p>
+            <div class="sourceCode" id="cb22"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">addThenDiv</span>(num<span class="op">:</span> <span class="dt">string</span>)<span class="op">:</span> Option<span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span> {</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ((num + 1) / 3) / 2</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">andThen</span>(</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>        <span class="fu">addOne</span>(num)<span class="op">,</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>        num1 <span class="kw">=&gt;</span> <span class="fu">andThen</span>(</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>            <span class="fu">safeDiv</span>(num1<span class="op">,</span> <span class="dv">3</span>)<span class="op">,</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>            num2 <span class="kw">=&gt;</span> <span class="fu">safeDiv</span>(num2<span class="op">,</span> <span class="dv">2</span>)<span class="op">,</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>    )<span class="op">;</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="co">/* is the same as */</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">addThenDiv</span>(num<span class="op">:</span> <span class="dt">string</span>)<span class="op">:</span> Option<span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span> {</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ((num + 1) / 3) / 2</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">andThen</span>(</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>        <span class="fu">andThen</span>(</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>            <span class="fu">addOne</span>(num)<span class="op">,</span></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>            num1 <span class="kw">=&gt;</span> <span class="fu">safeDiv</span>(num1<span class="op">,</span> <span class="dv">3</span>)</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>        )<span class="op">,</span></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>        num2 <span class="kw">=&gt;</span> <span class="fu">safeDiv</span>(num2<span class="op">,</span> <span class="dv">2</span>)</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>    )<span class="op">;</span></span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>isso é importante de se notar já que algumas linguages, como Rust não possuem <em>monads</em> diretamente, mas em Rust existe uma função <code>Option::and_then</code> que é exatamente equivalente à operação dos <em>monads</em>. Em Rust, você escreveria a função acima da seguinte maneira</p>
+            <div class="sourceCode" id="cb23"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> add_then_div(num<span class="op">:</span> <span class="op">&amp;</span><span class="dt">str</span>) <span class="op">-&gt;</span> <span class="dt">Option</span><span class="op">&lt;</span><span class="dt">f64</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    add_one(num)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>and_then(<span class="op">|</span>num1<span class="op">|</span> safe_div(num1<span class="op">,</span> <span class="dv">3.0</span>))</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span>and_then(<span class="op">|</span>num2<span class="op">|</span> safe_div(num2<span class="op">,</span> <span class="dv">2.0</span>))</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+            <p>que é só <em>syntax sugar</em> para</p>
+            <div class="sourceCode" id="cb24"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> add_then_div(num<span class="op">:</span> <span class="op">&amp;</span><span class="dt">str</span>) <span class="op">-&gt;</span> <span class="dt">Option</span><span class="op">&lt;</span><span class="dt">f64</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Option</span><span class="pp">::</span>and_then(</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>        <span class="dt">Option</span><span class="pp">::</span>and_then(</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>            add_one(num)<span class="op">,</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>            <span class="op">|</span>num1<span class="op">|</span> safe_div(num1<span class="op">,</span> <span class="dv">3.0</span>)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>        )<span class="op">,</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span>num2<span class="op">|</span> safe_div(num2<span class="op">,</span> <span class="dv">2.0</span>)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+            <p>entretanto, se compararmos com a nossa BetterScript</p>
+            <div class="sourceCode" id="cb25"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">addThenDiv</span>(num<span class="op">:</span> <span class="dt">string</span>)<span class="op">:</span> Option<span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span> {</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> num1 <span class="op">&lt;-</span> <span class="fu">addOne</span>(num)<span class="op">;</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> num2 <span class="op">&lt;-</span> <span class="fu">safeDiv</span>(num1<span class="op">,</span> <span class="dv">3</span>)<span class="op">;</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">safeDiv</span>(num2<span class="op">,</span> <span class="dv">2</span>)<span class="op">;</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>a sintaxe especial é <em>syntax sugar</em> para</p>
+            <div class="sourceCode" id="cb26"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">addThenDiv</span>(num<span class="op">:</span> <span class="dt">string</span>)<span class="op">:</span> Option<span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span> {</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// ((num + 1) / 3) / 2</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">andThen</span>(</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>        <span class="fu">addOne</span>(num)<span class="op">,</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>        num1 <span class="kw">=&gt;</span> <span class="fu">andThen</span>(</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>            <span class="fu">safeDiv</span>(num1<span class="op">,</span> <span class="dv">3</span>)<span class="op">,</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>            num2 <span class="kw">=&gt;</span> <span class="fu">safeDiv</span>(num2<span class="op">,</span> <span class="dv">2</span>)<span class="op">,</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>    )<span class="op">;</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>e por conta da propriedade de associatividade podemos ter certeza de que independente do <em>monad</em>, seja <code>Option</code>, <code>Result</code> ou o que for, essas duas formas de escrever vão ser <strong>sempre equivalentes</strong>.</p>
+            <h2 id="mais-monads-asyncawait-em-betterscript">Mais monads, async/await em BetterScript</h2>
+            <p>Passamos pelos monads mais básicos e fáceis de entender, <code>Option</code> e <code>Result</code>. Entretanto, existem muitos outros <em>monads</em> por aí com propriedades muito úteis. Um último exemplo que gostaria de deixar é sobre um <em>monad</em> bem mais complexo: o <em>monad</em> que as vezes é chamado de <code>Promise</code> ou <code>Future</code> e que possibilita async/await nas linguagens imperativas. De fato, esse tipo também é um <em>monad</em> onde as operações são definidas assim</p>
+            <div class="sourceCode" id="cb27"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">andThen</span><span class="op">&lt;</span>A<span class="op">,</span> B<span class="op">&gt;</span>(promise<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span>A<span class="op">&gt;,</span> action<span class="op">:</span> (value<span class="op">:</span> A) <span class="kw">=&gt;</span> <span class="bu">Promise</span><span class="op">&lt;</span>B<span class="op">&gt;</span>)<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span>B<span class="op">&gt;</span> {</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// This is just a builtin function in TypeScript</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> promise<span class="op">.</span><span class="fu">then</span>(action)<span class="op">;</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">wrap</span><span class="op">&lt;</span>T<span class="op">&gt;</span>(value<span class="op">:</span> T)<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span>T<span class="op">&gt;</span> {</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">Promise</span><span class="op">.</span><span class="fu">resolve</span>(value)<span class="op">;</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>também precisamos garantir que as leis são cumpridas</p>
+            <ul>
+            <li><p>Identidade à esquerda</p>
+            <div class="sourceCode" id="cb28"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">andThen</span>(<span class="fu">wrap</span>(a)<span class="op">,</span> f) <span class="co">/* is the same as */</span> <span class="fu">f</span>(a)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="co">// inlining the functions</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="bu">Promise</span><span class="op">.</span><span class="fu">resolve</span>(a)<span class="op">.</span><span class="fu">then</span>(f) <span class="co">/* is the same as */</span> <span class="fu">f</span>(a) ✅</span></code></pre></div></li>
+            <li><p>Identidade à direita</p>
+            <div class="sourceCode" id="cb29"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">andThen</span>(m<span class="op">,</span> wrap) <span class="co">/* is the same as */</span> m</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="co">// inlining the functions</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>m<span class="op">.</span><span class="fu">then</span>(<span class="bu">Promise</span><span class="op">.</span><span class="fu">resolve</span>)  <span class="co">/* is the same as */</span> m ✅</span></code></pre></div></li>
+            <li><p>Associatividade</p>
+            <div class="sourceCode" id="cb30"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">andThen</span>(<span class="fu">andThen</span>(m<span class="op">,</span> g)<span class="op">,</span> h)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="co">/* is the same as */</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="fu">andThen</span>(m<span class="op">,</span> x <span class="kw">=&gt;</span> <span class="fu">andThen</span>(<span class="fu">g</span>(x)<span class="op">,</span> h))</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="co">// inlining the functions</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>m<span class="op">.</span><span class="fu">then</span>(g)<span class="op">.</span><span class="fu">then</span>(h) <span class="co">/* is the same as */</span> m<span class="op">.</span><span class="fu">then</span>(x <span class="kw">=&gt;</span> <span class="fu">g</span>(x)<span class="op">.</span><span class="fu">then</span>(h)) ✅</span></code></pre></div></li>
+            </ul>
+            <p>e pronto! Está confirmado: <code>Promise</code> forma um monad com as operações <code>.then</code> e <code>Promise.resolve</code>. Por fim, assim como em TypeScript podemos usar <code>async/await</code> para definir funções assíncronas</p>
+            <div class="sourceCode" id="cb31"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">sleepMS</span>(millis<span class="op">:</span> <span class="dt">number</span>)<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span><span class="dt">void</span><span class="op">&gt;</span> {</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">new</span> <span class="bu">Promise</span>(resolve <span class="kw">=&gt;</span> <span class="pp">setTimeout</span>(resolve<span class="op">,</span> millis))<span class="op">;</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="kw">async</span> <span class="kw">function</span> <span class="fu">printHelloAfterMillis</span>(millis<span class="op">:</span> <span class="dt">number</span>)<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span><span class="dt">void</span><span class="op">&gt;</span> {</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> <span class="fu">sleepMS</span>(millis)<span class="op">;</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&quot;hello, world&quot;</span>)<span class="op">;</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>Em BetterScript podemos fazer o mesmo sem precisamos de qualquer suporte especial da linguagem para async/await, só usamos o que já tínhamos definido antes</p>
+            <div class="sourceCode" id="cb32"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">printHelloAfterMillis</span>(millis<span class="op">:</span> <span class="dt">number</span>)<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span><span class="dt">void</span><span class="op">&gt;</span> {</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Valor é `void`, vamos descartar</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> _ <span class="op">&lt;-</span> <span class="fu">sleepMS</span>(millis)<span class="op">;</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&quot;hello, world&quot;</span>)<span class="op">;</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">// `wrap()` sem argumento é o mesmo que passar um argumento do tipo</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">// `void`.</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">wrap</span>()<span class="op">;</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>Note que a função <code>printHelloAfterMillis</code> seria “compilada” para o equivalente do TypeScript</p>
+            <div class="sourceCode" id="cb33"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">printHelloAfterMillis</span>(millis<span class="op">:</span> <span class="dt">number</span>)<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span><span class="dt">void</span><span class="op">&gt;</span> {</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">andThen</span>(</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>        <span class="fu">sleepMS</span>(millis)<span class="op">,</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>        _ <span class="kw">=&gt;</span> {</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>            <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&quot;hello, world&quot;</span>)<span class="op">;</span></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="fu">wrap</span>()<span class="op">;</span></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>    )<span class="op">;</span></span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a><span class="co">// inlining</span></span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">printHelloAfterMillis</span>(millis<span class="op">:</span> <span class="dt">number</span>)<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span><span class="dt">void</span><span class="op">&gt;</span> {</span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">sleepMS</span>(millis)</span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>        <span class="op">.</span><span class="fu">then</span>(_ <span class="kw">=&gt;</span> {</span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>            <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&quot;hello, world&quot;</span>)<span class="op">;</span></span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="bu">Promise</span><span class="op">.</span><span class="fu">resolve</span>()<span class="op">;</span></span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a>        })<span class="op">;</span></span>
+<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <h2 id="o-monad-de-não-determinismo">O <em>Monad</em> de não determinismo</h2>
+            <p>Um dos <em>monads</em> mais legais (e já mais difíceis de compreender para mim) é o monad de lista, ou de não determinismo. Se trata de um monad formado pelo tipo <code>Array</code> com operações</p>
+            <div class="sourceCode" id="cb34"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">andThen</span><span class="op">&lt;</span>A<span class="op">,</span> B<span class="op">&gt;</span>(arr<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>A<span class="op">&gt;,</span> action<span class="op">:</span> (value<span class="op">:</span> A) <span class="kw">=&gt;</span> <span class="bu">Array</span><span class="op">&lt;</span>B<span class="op">&gt;</span>)<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>B<span class="op">&gt;</span> {</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> arr<span class="op">.</span><span class="fu">flatMap</span>(action)<span class="op">;</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">wrap</span><span class="op">&lt;</span>B<span class="op">&gt;</span>(value<span class="op">:</span> B)<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>B<span class="op">&gt;</span> {</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [value]<span class="op">;</span></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>O motivo pelo qual ele também pode ser chamado de <em>monad</em> de não determinismo é porque digamos que você gostaria de escrever uma função que encontre um elemento dentro de uma lista de acordo com um predicado. A forma mais intuitiva de fazer isso, é com um laço</p>
+            <div class="sourceCode" id="cb35"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">contains</span><span class="op">&lt;</span>T<span class="op">&gt;</span>(arr<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>T<span class="op">&gt;,</span> predicate<span class="op">:</span> (el<span class="op">:</span> T) <span class="kw">=&gt;</span> <span class="dt">boolean</span>)<span class="op">:</span> <span class="dt">boolean</span> {</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">const</span> el <span class="kw">of</span> arr) {</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">predicate</span>(arr))</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="kw">true</span><span class="op">;</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">false</span><span class="op">;</span></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>mas outra forma de pensar é, ao invés de selecionar um elemento por vez e verificar, selecionar “todos eles de uma vez” e fazer a verificação “em paralelo” de maneira não determinística. Caso o item não seja encontrado, em uma das “execuções paralelas” produz <code>false</code> e caso tenha encontrado, produz <code>true</code>.</p>
+            <div class="sourceCode" id="cb36"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">contains</span><span class="op">&lt;</span>T<span class="op">&gt;</span>(arr<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>T<span class="op">&gt;,</span> predicate<span class="op">:</span> (el<span class="op">:</span> T) <span class="kw">=&gt;</span> <span class="dt">boolean</span>)<span class="op">:</span> <span class="dt">boolean</span> {</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">nonDet</span>()<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span><span class="dt">boolean</span><span class="op">&gt;</span> {</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Picks one element, but actually all of them &quot;at once&quot;.</span></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Non-determinism.</span></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> el <span class="op">&lt;-</span> arr<span class="op">;</span></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="fu">wrap</span>(<span class="fu">predicate</span>(el))<span class="op">;</span></span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Only checks if some of the &quot;parallel executions&quot; produced `true`</span></span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">nonDet</span>()<span class="op">.</span><span class="fu">some</span>(b <span class="kw">=&gt;</span> b)<span class="op">;</span></span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>Outra forma de implementar a mesma ideia é não produzir valor algum quando o elemento não for encontrado e produzir um valor qualquer (aqui usamos <code>{}</code>) quando ele é encontrado. Por fim, basta verificar se alguma das “execuções paralelas” produziram algum valor.</p>
+            <div class="sourceCode" id="cb37"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">contains</span><span class="op">&lt;</span>T<span class="op">&gt;</span>(arr<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>T<span class="op">&gt;,</span> predicate<span class="op">:</span> (el<span class="op">:</span> T) <span class="kw">=&gt;</span> <span class="dt">boolean</span>)<span class="op">:</span> <span class="dt">boolean</span> {</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">nonDet</span>()<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>{}<span class="op">&gt;</span> {</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> el <span class="op">&lt;-</span> arr<span class="op">;</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="fu">predicate</span>(el) <span class="op">?</span> <span class="fu">wrap</span>({}) <span class="op">:</span> []<span class="op">;</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Only checks if some of the &quot;parallel executions&quot; produced a value</span></span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">nonDet</span>()<span class="op">.</span><span class="at">length</span> <span class="op">&gt;</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>Note que a função acima é “compilada” para</p>
+            <div class="sourceCode" id="cb38"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">contains</span><span class="op">&lt;</span>T<span class="op">&gt;</span>(arr<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>T<span class="op">&gt;,</span> predicate<span class="op">:</span> (el<span class="op">:</span> T) <span class="kw">=&gt;</span> <span class="dt">boolean</span>)<span class="op">:</span> <span class="dt">boolean</span> {</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">nonDet</span>()<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>{}<span class="op">&gt;</span> {</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="fu">andThen</span>(arr<span class="op">,</span> el <span class="kw">=&gt;</span> el <span class="op">==</span> needle <span class="op">?</span> <span class="fu">wrap</span>({}) <span class="op">:</span> [])</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">nonDet</span>()<span class="op">.</span><span class="at">length</span> <span class="op">&gt;</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a><span class="co">// inlining</span></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">contains</span><span class="op">&lt;</span>T<span class="op">&gt;</span>(arr<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>T<span class="op">&gt;,</span> predicate<span class="op">:</span> (el<span class="op">:</span> T) <span class="kw">=&gt;</span> <span class="dt">boolean</span>)<span class="op">:</span> <span class="dt">boolean</span> {</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">nonDet</span>()<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>{}<span class="op">&gt;</span> {</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> arr<span class="op">.</span><span class="fu">flatMap</span>(el <span class="kw">=&gt;</span> el <span class="op">==</span> needle <span class="op">?</span> [{}] <span class="op">:</span> [])</span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">nonDet</span>()<span class="op">.</span><span class="at">length</span> <span class="op">&gt;</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a><span class="co">// inlining</span></span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">contains</span><span class="op">&lt;</span>T<span class="op">&gt;</span>(arr<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>T<span class="op">&gt;,</span> predicate<span class="op">:</span> (el<span class="op">:</span> T) <span class="kw">=&gt;</span> <span class="dt">boolean</span>)<span class="op">:</span> <span class="dt">boolean</span> {</span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> arr<span class="op">.</span><span class="fu">flatMap</span>(el <span class="kw">=&gt;</span> el <span class="op">==</span> needle <span class="op">?</span> [{}] <span class="op">:</span> [])<span class="op">.</span><span class="at">length</span> <span class="op">&gt;</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>Um outro exemplo onde podemos usar o não determinismo é para resolver o problema das <code>n</code> rainhas. Esse problema, se resume em encontrar uma forma de encaixar <code>n</code> rainhas (do xadrez) num tabuleiro <code>n x n</code> sem que nenhuma rainha esteja atacando outra. Para resolver o problema consideramos todas as possibilidades de uma vez e computamos o resultado de maneira “linear”, colocando uma rainha em em cada linha do tabuleiro. O código ficaria</p>
+            <div class="sourceCode" id="cb39"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Queen <span class="op">=</span> {</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    row<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    column<span class="op">:</span> <span class="dt">number</span><span class="op">,</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Solution <span class="op">=</span> <span class="bu">Array</span><span class="op">&lt;</span>Queen<span class="op">&gt;;</span></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">solveNQueens</span>(n<span class="op">:</span> <span class="dt">number</span>)<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>Solution<span class="op">&gt;</span> {</span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Solves from row `row` until row `n` having placed `placed` queens</span></span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">// on the rows prior.</span></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">rec</span>(row<span class="op">:</span> <span class="dt">number</span><span class="op">,</span> placed<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>Queen<span class="op">&gt;</span>)<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>Solution<span class="op">&gt;</span> {</span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>        <span class="co">// We reached the end, return the queens we&#39;ve placed.</span></span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (row <span class="op">&gt;</span> n) <span class="cf">return</span> <span class="fu">wrap</span>(placed)<span class="op">;</span></span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Picks one column, but actually all of them &quot;at once&quot;.</span></span>
+<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Non-determinism.</span></span>
+<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> column <span class="op">&lt;-</span> <span class="fu">range</span>(<span class="dv">1</span><span class="op">,</span> n)<span class="op">;</span></span>
+<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> queen <span class="op">=</span> { row<span class="op">,</span> column }<span class="op">;</span></span>
+<span id="cb39-17"><a href="#cb39-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="fu">safeToPlace</span>(placed<span class="op">,</span> queen)</span>
+<span id="cb39-18"><a href="#cb39-18" aria-hidden="true" tabindex="-1"></a>            <span class="op">?</span> <span class="fu">rec</span>(row <span class="op">+</span> <span class="dv">1</span><span class="op">,</span> placed <span class="op">+</span> [queen])</span>
+<span id="cb39-19"><a href="#cb39-19" aria-hidden="true" tabindex="-1"></a>            <span class="op">:</span> []<span class="op">;</span></span>
+<span id="cb39-20"><a href="#cb39-20" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb39-21"><a href="#cb39-21" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Start on row 1 without any placed queens.</span></span>
+<span id="cb39-22"><a href="#cb39-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">rec</span>(<span class="dv">1</span><span class="op">,</span> [])<span class="op">;</span></span>
+<span id="cb39-23"><a href="#cb39-23" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb39-24"><a href="#cb39-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-25"><a href="#cb39-25" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">safeToPlace</span>(placed<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span>Queen<span class="op">&gt;,</span> queen<span class="op">:</span> Queen)<span class="op">:</span> <span class="dt">boolean</span> {</span>
+<span id="cb39-26"><a href="#cb39-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> attacks <span class="op">=</span> (q1<span class="op">:</span> Queen<span class="op">,</span> q2<span class="op">:</span> Queen) <span class="kw">=&gt;</span> (</span>
+<span id="cb39-27"><a href="#cb39-27" aria-hidden="true" tabindex="-1"></a>        <span class="co">// same row</span></span>
+<span id="cb39-28"><a href="#cb39-28" aria-hidden="true" tabindex="-1"></a>        q1<span class="op">.</span><span class="at">row</span> <span class="op">===</span> q2<span class="op">.</span><span class="at">row</span></span>
+<span id="cb39-29"><a href="#cb39-29" aria-hidden="true" tabindex="-1"></a>        <span class="co">// same column</span></span>
+<span id="cb39-30"><a href="#cb39-30" aria-hidden="true" tabindex="-1"></a>        <span class="op">||</span> q1<span class="op">.</span><span class="at">column</span> <span class="op">===</span> q2<span class="op">.</span><span class="at">column</span></span>
+<span id="cb39-31"><a href="#cb39-31" aria-hidden="true" tabindex="-1"></a>        <span class="co">// same diagonal</span></span>
+<span id="cb39-32"><a href="#cb39-32" aria-hidden="true" tabindex="-1"></a>        <span class="op">||</span> q1<span class="op">.</span><span class="at">row</span> <span class="op">-</span> q2<span class="op">.</span><span class="at">row</span> <span class="op">===</span> q1<span class="op">.</span><span class="at">column</span> <span class="op">-</span> q2<span class="op">.</span><span class="at">column</span></span>
+<span id="cb39-33"><a href="#cb39-33" aria-hidden="true" tabindex="-1"></a>        <span class="co">// same other diagonal</span></span>
+<span id="cb39-34"><a href="#cb39-34" aria-hidden="true" tabindex="-1"></a>        <span class="op">||</span> q1<span class="op">.</span><span class="at">row</span> <span class="op">-</span> q2<span class="op">.</span><span class="at">row</span> <span class="op">===</span> q2<span class="op">.</span><span class="at">column</span> <span class="op">-</span> q1<span class="op">.</span><span class="at">column</span></span>
+<span id="cb39-35"><a href="#cb39-35" aria-hidden="true" tabindex="-1"></a>    )<span class="op">;</span></span>
+<span id="cb39-36"><a href="#cb39-36" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Returns `true` if no queen attacks `queen`.</span></span>
+<span id="cb39-37"><a href="#cb39-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">!</span>placed<span class="op">.</span><span class="fu">map</span>(q1 <span class="kw">=&gt;</span> <span class="fu">attacks</span>(q1<span class="op">,</span> queen))<span class="op">.</span><span class="fu">some</span>()<span class="op">;</span></span>
+<span id="cb39-38"><a href="#cb39-38" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb39-39"><a href="#cb39-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-40"><a href="#cb39-40" aria-hidden="true" tabindex="-1"></a><span class="co">// Returns an array with all integers from `start` to `end`, inclusive.</span></span>
+<span id="cb39-41"><a href="#cb39-41" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">range</span>(start<span class="op">:</span> <span class="dt">number</span><span class="op">,</span> end<span class="op">:</span> <span class="dt">number</span>)<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span> {</span>
+<span id="cb39-42"><a href="#cb39-42" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> arr <span class="op">=</span> []<span class="op">;</span></span>
+<span id="cb39-43"><a href="#cb39-43" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Mutation here is fine since it is confined to this function</span></span>
+<span id="cb39-44"><a href="#cb39-44" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> start<span class="op">;</span> i <span class="op">&lt;=</span> end<span class="op">;</span> i<span class="op">++</span>)</span>
+<span id="cb39-45"><a href="#cb39-45" aria-hidden="true" tabindex="-1"></a>        arr<span class="op">.</span><span class="fu">push</span>(i)<span class="op">;</span></span>
+<span id="cb39-46"><a href="#cb39-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> arr<span class="op">;</span></span>
+<span id="cb39-47"><a href="#cb39-47" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>É interessante analisar que numa máquina não determinística esse algoritmo é <span class="math inline">\(O(n)\)</span>. Isso é evidente já que a única iteração presente é na função <code>rec</code> que vai incrementando o valor de <code>row</code> de <code>1</code> até <code>n</code>. Similarmente, a função <code>contains</code> é <span class="math inline">\(O(1)\)</span> numa máquina não determinística, visto que não possui laços internos ou recursão.</p>
+            <h2 id="conclusão">Conclusão</h2>
+            <p><em>Monads</em> são uma forma de abstrair composição de operações (poderia-se até dizer, um <em>design pattern</em>). Eles aparecem em diversas situações comuns no mundo da programação e são poderosos por serem uma astração mínima governada por algumas propriedades matemáticas. Alguns até dizem que <em>monads</em> são formas de controlar o ponto e vírgula no final da declaração, já que atuam justamente entre as operações.</p>
+            <p>Como um <em>design pattern</em> são principalmente úteis e muito usados pelas linguagens funcionais, mas os conceitos que envolvem também aparecem em todo tipo de linguagem de programação moderna imperativa.</p>
+            <p>Uma percepção chave para entender que <em>monads</em> não estão limitados a estes exemplos que mostrei, é notar que a função <code>andThen</code> que usamos como fundação para tudo o que fizemos, recebe uma função como segundo argumento (<code>action</code>). Por conta das regras que criamos para a sintaxe <code>const var &lt;- expr;</code>, essa função contém todo o resto do corpo da função. Ao invés de uma operação simplesmente retornar, digamos, uma <code>Option</code>, isso é tratado pela <code>andThen</code> que chama <code>action</code> no valor contido na <code>Option</code> e permite que o programa continue sua execução. Na verdade, essa função <code>action</code> na realidade é algo que chamamos de <em>continuation</em>, uma função que encapsula o “resto” da operação. Isso é poderoso porque a implementação de <code>andThen</code> pode determinar se/quando e com que valor a operação vai continuar. Em <em>monads</em> mais complexos também é possível controlar de maneira mais fina “até onde” a operação vai continuar. Isso pode parecer meio abstrato de mais, mas um exemplo bem prático é o <code>try..catch</code> em linguagens imperativas. Quando você coloca um bloco <code>try..catch</code> está determinando que as exceções jogadas dentro do <code>try</code> vão retornar o fluxo para o bloco <code>catch</code>. Nesse sentido, o <code>try..catch</code> delimita até onde exceções podem ir. No exemplo que mostramos do <code>Result</code>, se houver uma falha em qualquer parte de qualquer função, essa falha vai ser propagada até a função mais externa dentro do <em>monad</em>. Mas muitas vezes um controle mais fino é necessário para implementar as lógicas que queremos, e isso também é possível através de <em>monads</em> mais complexos (<em>continuation monad</em>).</p>
+            <p>Para fechar, <em>monads</em> estão por toda parte, sabendo ou não disso, é um fato. Muitas linguagens imperativas implementam <em>monads</em> específicos como features da própria sintaxe (<code>async..await</code>, <code>try..catch</code>, <code>break</code>, mutabilidade, etc) mas na realidade existe uma abstração única que abrange todos esses conceitos e muitos mais: o <em>monad</em>!</p>
+            <h2 id="apêndice">Apêndice</h2>
+            <h3 id="como-betterscript-pode-lidar-com-loops">Como BetterScript pode lidar com loops</h3>
+            <p>Isso pode ser um questionamento entre leitores. Pode ser óbvia a forma como a reescrita de BetterScript para TypeScript ocorreria para qualquer função sem loop. Mas se tiver loops, como fica? Bem, na realidade, todo loop que eventualmente termina, numa linguagem imperativa requer mutação de algum tipo. Por exemplo, num <code>for</code> loop geralmente temos um <code>i++</code> ou alguma coisa que faz com que eventualmente a condição do loop seja <code>false</code> (se não ele roda para sempre). Num <code>while</code> loop temos a mesma coisa, em algum momento a condição precisa ser <code>false</code>, enquanto antes era <code>true</code> e, portanto, o corpo do loop precisa mudar algum estado para que a condição mude de <code>true</code> para <code>false</code>. Já loops infinitos podem ser traduzidos usando recursão, eliminando possibilidade de stack overflow através de <em>tail recursion</em>.</p>
+            <div class="sourceCode" id="cb40"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">infiniteLoop</span>() {</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> (<span class="kw">true</span>) {</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> _ <span class="op">&lt;-</span> <span class="fu">sleepMS</span>(<span class="dv">200</span>)<span class="op">;</span></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>        <span class="co">/* ... rest of body ... */</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a><span class="co">// gets translated into</span></span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">infiniteLoop</span>() {</span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">whileLoop</span>() {</span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>        <span class="co">// tail call</span></span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="fu">andThen</span>(</span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>            <span class="fu">sleepMS</span>(<span class="dv">200</span>)<span class="op">,</span></span>
+<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a>            _ <span class="kw">=&gt;</span> {</span>
+<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a>                <span class="co">/* ... rest of body ... */</span></span>
+<span id="cb40-15"><a href="#cb40-15" aria-hidden="true" tabindex="-1"></a>                <span class="co">// tail call</span></span>
+<span id="cb40-16"><a href="#cb40-16" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> <span class="fu">whileLoop</span>()<span class="op">;</span></span>
+<span id="cb40-17"><a href="#cb40-17" aria-hidden="true" tabindex="-1"></a>            }</span>
+<span id="cb40-18"><a href="#cb40-18" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb40-19"><a href="#cb40-19" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb40-20"><a href="#cb40-20" aria-hidden="true" tabindex="-1"></a>    <span class="co">// tail call</span></span>
+<span id="cb40-21"><a href="#cb40-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">whileLoop</span>()<span class="op">;</span></span>
+<span id="cb40-22"><a href="#cb40-22" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>Se mutação for utilizada, o programa não pode mais ser considerado puramente funcional e daí se torna bem mais complicado pensar sobre <em>monads</em> dessa maneira como é definida em programação funcional. Por conta disso, esses casos não estão sendo considerados. É possível até certo nível tentar fazer esse tipo de coisa funcionar para casos específicos, como <code>for</code> loops simples</p>
+            <div class="sourceCode" id="cb41"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">countUntilN</span>(n<span class="op">:</span> <span class="dt">number</span>)<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span><span class="dt">void</span><span class="op">&gt;</span> {</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">// This is also not purely functional, but it&#39;s not much of a</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">// problem in this case.</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="vs">`starting with n = </span><span class="sc">${</span>n<span class="sc">}</span><span class="vs">`</span>)<span class="op">;</span></span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> _ <span class="op">&lt;-</span> <span class="fu">sleepMS</span>(<span class="dv">200</span>)<span class="op">;</span> <span class="co">// Just complicate a bit more</span></span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Notice that `i++` is the same as `i = i + 1`</span></span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> n<span class="op">;</span> i<span class="op">++</span>) {</span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> _ <span class="op">&lt;-</span> <span class="fu">sleepMS</span>(<span class="dv">200</span>)<span class="op">;</span></span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>        <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="vs">`i = </span><span class="sc">${</span>i<span class="sc">}</span><span class="vs">`</span>)<span class="op">;</span></span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&quot;after loop&quot;</span>)<span class="op">;</span></span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">wrap</span>()<span class="op">;</span></span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a><span class="co">// gets translated into</span></span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">countUntilN</span>(n<span class="op">:</span> <span class="dt">number</span>)<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span><span class="dt">void</span><span class="op">&gt;</span> {</span>
+<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a>    <span class="co">// tail call</span></span>
+<span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">andThen</span>(</span>
+<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a>        <span class="fu">sleepMS</span>(<span class="dv">200</span>)<span class="op">,</span></span>
+<span id="cb41-19"><a href="#cb41-19" aria-hidden="true" tabindex="-1"></a>        _ <span class="kw">=&gt;</span> {</span>
+<span id="cb41-20"><a href="#cb41-20" aria-hidden="true" tabindex="-1"></a>            <span class="kw">function</span> <span class="fu">forLoop</span>(i<span class="op">:</span> <span class="dt">number</span>)<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span><span class="dt">void</span><span class="op">&gt;</span> {</span>
+<span id="cb41-21"><a href="#cb41-21" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> (i <span class="op">&lt;</span> n) {</span>
+<span id="cb41-22"><a href="#cb41-22" aria-hidden="true" tabindex="-1"></a>                    <span class="co">// tail call</span></span>
+<span id="cb41-23"><a href="#cb41-23" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">return</span> <span class="fu">andThen</span>(</span>
+<span id="cb41-24"><a href="#cb41-24" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">sleepMS</span>(<span class="dv">200</span>)<span class="op">,</span></span>
+<span id="cb41-25"><a href="#cb41-25" aria-hidden="true" tabindex="-1"></a>                        _ <span class="kw">=&gt;</span> {</span>
+<span id="cb41-26"><a href="#cb41-26" aria-hidden="true" tabindex="-1"></a>                            <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="vs">`i = </span><span class="sc">${</span>i<span class="sc">}</span><span class="vs">`</span>)<span class="op">;</span></span>
+<span id="cb41-27"><a href="#cb41-27" aria-hidden="true" tabindex="-1"></a>                            <span class="co">// tail call</span></span>
+<span id="cb41-28"><a href="#cb41-28" aria-hidden="true" tabindex="-1"></a>                            <span class="cf">return</span> <span class="fu">forLoop</span>(i <span class="op">+</span> <span class="dv">1</span>)<span class="op">;</span></span>
+<span id="cb41-29"><a href="#cb41-29" aria-hidden="true" tabindex="-1"></a>                        }</span>
+<span id="cb41-30"><a href="#cb41-30" aria-hidden="true" tabindex="-1"></a>                    )<span class="op">;</span></span>
+<span id="cb41-31"><a href="#cb41-31" aria-hidden="true" tabindex="-1"></a>                } <span class="cf">else</span> {</span>
+<span id="cb41-32"><a href="#cb41-32" aria-hidden="true" tabindex="-1"></a>                    <span class="co">// This is not present in the original code. But here</span></span>
+<span id="cb41-33"><a href="#cb41-33" aria-hidden="true" tabindex="-1"></a>                    <span class="co">// we need the `forLoop` function to return something</span></span>
+<span id="cb41-34"><a href="#cb41-34" aria-hidden="true" tabindex="-1"></a>                    <span class="co">// which is the value the `for` expression evaluates</span></span>
+<span id="cb41-35"><a href="#cb41-35" aria-hidden="true" tabindex="-1"></a>                    <span class="co">// to, which is just void.</span></span>
+<span id="cb41-36"><a href="#cb41-36" aria-hidden="true" tabindex="-1"></a>                    <span class="co">// tail call</span></span>
+<span id="cb41-37"><a href="#cb41-37" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">return</span> <span class="fu">wrap</span>()<span class="op">;</span></span>
+<span id="cb41-38"><a href="#cb41-38" aria-hidden="true" tabindex="-1"></a>                }</span>
+<span id="cb41-39"><a href="#cb41-39" aria-hidden="true" tabindex="-1"></a>            }</span>
+<span id="cb41-40"><a href="#cb41-40" aria-hidden="true" tabindex="-1"></a>            <span class="co">// tail call</span></span>
+<span id="cb41-41"><a href="#cb41-41" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="fu">andThen</span>(</span>
+<span id="cb41-42"><a href="#cb41-42" aria-hidden="true" tabindex="-1"></a>                <span class="fu">forLoop</span>(<span class="dv">0</span>)<span class="op">,</span></span>
+<span id="cb41-43"><a href="#cb41-43" aria-hidden="true" tabindex="-1"></a>                _ <span class="kw">=&gt;</span> {</span>
+<span id="cb41-44"><a href="#cb41-44" aria-hidden="true" tabindex="-1"></a>                    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&quot;after loop&quot;</span>)<span class="op">;</span></span>
+<span id="cb41-45"><a href="#cb41-45" aria-hidden="true" tabindex="-1"></a>                    <span class="co">// tail call</span></span>
+<span id="cb41-46"><a href="#cb41-46" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">return</span> <span class="fu">wrap</span>()<span class="op">;</span></span>
+<span id="cb41-47"><a href="#cb41-47" aria-hidden="true" tabindex="-1"></a>                }</span>
+<span id="cb41-48"><a href="#cb41-48" aria-hidden="true" tabindex="-1"></a>            )<span class="op">;</span></span>
+<span id="cb41-49"><a href="#cb41-49" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb41-50"><a href="#cb41-50" aria-hidden="true" tabindex="-1"></a>    )<span class="op">;</span></span>
+<span id="cb41-51"><a href="#cb41-51" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>e também para <code>for...of</code> que são mais restritos e não requerem do usuário fazer a mutação manualmente (ela existe, entretanto, já que a variável escondida que armazena o objeto de iterador é modificado a cada iteração).</p>
+            <div class="sourceCode" id="cb42"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">printElements</span>(arr<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span>)<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span><span class="dt">void</span><span class="op">&gt;</span> {</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">const</span> el <span class="kw">of</span> arr) {</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> _ <span class="op">&lt;-</span> <span class="fu">sleepMS</span>(<span class="dv">200</span>)<span class="op">;</span></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>        <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(el)<span class="op">;</span></span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">wrap</span>()<span class="op">;</span></span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a><span class="co">// gets translated into</span></span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">printElements</span>(arr<span class="op">:</span> <span class="bu">Array</span><span class="op">&lt;</span><span class="dt">number</span><span class="op">&gt;</span>)<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span><span class="dt">void</span><span class="op">&gt;</span> {</span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> arr_it <span class="op">=</span> arr[<span class="bu">Symbol</span><span class="op">.</span><span class="at">iterator</span>]()<span class="op">;</span></span>
+<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">forLoop</span>() {</span>
+<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a>        <span class="co">// Here is the mutation, `.next()` mutates the `arr_it` object.</span></span>
+<span id="cb42-13"><a href="#cb42-13" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> { value<span class="op">:</span> el<span class="op">,</span> done } <span class="op">=</span> arr_it<span class="op">.</span><span class="fu">next</span>()<span class="op">;</span></span>
+<span id="cb42-14"><a href="#cb42-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="op">!</span>done) {</span>
+<span id="cb42-15"><a href="#cb42-15" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="fu">andThen</span>(</span>
+<span id="cb42-16"><a href="#cb42-16" aria-hidden="true" tabindex="-1"></a>                <span class="fu">sleepMS</span>(<span class="dv">200</span>)<span class="op">,</span></span>
+<span id="cb42-17"><a href="#cb42-17" aria-hidden="true" tabindex="-1"></a>                _ <span class="kw">=&gt;</span> {</span>
+<span id="cb42-18"><a href="#cb42-18" aria-hidden="true" tabindex="-1"></a>                    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(el)<span class="op">;</span></span>
+<span id="cb42-19"><a href="#cb42-19" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">return</span> <span class="fu">forLoop</span>()<span class="op">;</span></span>
+<span id="cb42-20"><a href="#cb42-20" aria-hidden="true" tabindex="-1"></a>                }</span>
+<span id="cb42-21"><a href="#cb42-21" aria-hidden="true" tabindex="-1"></a>            )<span class="op">;</span></span>
+<span id="cb42-22"><a href="#cb42-22" aria-hidden="true" tabindex="-1"></a>        } <span class="cf">else</span> {</span>
+<span id="cb42-23"><a href="#cb42-23" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="fu">wrap</span>()<span class="op">;</span></span>
+<span id="cb42-24"><a href="#cb42-24" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb42-25"><a href="#cb42-25" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb42-26"><a href="#cb42-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">andThen</span>(</span>
+<span id="cb42-27"><a href="#cb42-27" aria-hidden="true" tabindex="-1"></a>        <span class="fu">forLoop</span>()<span class="op">,</span></span>
+<span id="cb42-28"><a href="#cb42-28" aria-hidden="true" tabindex="-1"></a>        _ <span class="kw">=&gt;</span> {</span>
+<span id="cb42-29"><a href="#cb42-29" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="fu">wrap</span>()<span class="op">;</span></span>
+<span id="cb42-30"><a href="#cb42-30" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb42-31"><a href="#cb42-31" aria-hidden="true" tabindex="-1"></a>    )<span class="op">;</span></span>
+<span id="cb42-32"><a href="#cb42-32" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <p>Entretanto note que um <code>for...of</code> como em <code>printElements</code> não funcionaria para <em>monads</em> que chamam a <em>continuation</em> mais de uma vez, como é o caso do <em>monad</em> de não determinismo uma vez que o objeto de iterador foi modificado uma vez e não tem como “voltar atrás”. Portanto, mutação não é uma coisa que pode ser tratada tão facilmente de maneira geral.</p>
+            <h3 id="transformação-passo-a-passo">Transformação passo-a-passo</h3>
+            <p>Só uma sugestão de como essa transformação poderia de fato ser potencialmente implementada</p>
+            <div class="sourceCode" id="cb43"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">countUntilN</span>(n<span class="op">:</span> <span class="dt">number</span>)<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span><span class="dt">void</span><span class="op">&gt;</span> {</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="vs">`starting with n = </span><span class="sc">${</span>n<span class="sc">}</span><span class="vs">`</span>)<span class="op">;</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> _ <span class="op">&lt;-</span> <span class="fu">sleepMS</span>(<span class="dv">200</span>)<span class="op">;</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (<span class="kw">let</span> i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> n<span class="op">;</span> i<span class="op">++</span>) {</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>        <span class="kw">const</span> _ <span class="op">&lt;-</span> <span class="fu">sleepMS</span>(<span class="dv">200</span>)<span class="op">;</span></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>        <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="vs">`i = </span><span class="sc">${</span>i<span class="sc">}</span><span class="vs">`</span>)<span class="op">;</span></span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&quot;after loop&quot;</span>)<span class="op">;</span></span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">wrap</span>()<span class="op">;</span></span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a><span class="co">// step 1: transform loops</span></span>
+<span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">countUntilN</span>(n<span class="op">:</span> <span class="dt">number</span>)<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span><span class="dt">void</span><span class="op">&gt;</span> {</span>
+<span id="cb43-13"><a href="#cb43-13" aria-hidden="true" tabindex="-1"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="vs">`starting with n = </span><span class="sc">${</span>n<span class="sc">}</span><span class="vs">`</span>)<span class="op">;</span></span>
+<span id="cb43-14"><a href="#cb43-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> _ <span class="op">&lt;-</span> <span class="fu">sleepMS</span>(<span class="dv">200</span>)<span class="op">;</span></span>
+<span id="cb43-15"><a href="#cb43-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">function</span> <span class="fu">forLoop</span>(i <span class="op">=</span> <span class="dv">0</span> <span class="co">/* allows type inference */</span>) {</span>
+<span id="cb43-16"><a href="#cb43-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (i <span class="op">&lt;</span> n) {</span>
+<span id="cb43-17"><a href="#cb43-17" aria-hidden="true" tabindex="-1"></a>            <span class="kw">const</span> _ <span class="op">&lt;-</span> <span class="fu">sleepMS</span>(<span class="dv">200</span>)<span class="op">;</span></span>
+<span id="cb43-18"><a href="#cb43-18" aria-hidden="true" tabindex="-1"></a>            <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="vs">`i = </span><span class="sc">${</span>i<span class="sc">}</span><span class="vs">`</span>)<span class="op">;</span></span>
+<span id="cb43-19"><a href="#cb43-19" aria-hidden="true" tabindex="-1"></a>            <span class="co">// Mutation is fine here, its just easier to reuse existing</span></span>
+<span id="cb43-20"><a href="#cb43-20" aria-hidden="true" tabindex="-1"></a>            <span class="co">// code.</span></span>
+<span id="cb43-21"><a href="#cb43-21" aria-hidden="true" tabindex="-1"></a>            i<span class="op">++;</span></span>
+<span id="cb43-22"><a href="#cb43-22" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="fu">forLoop</span>(i)<span class="op">;</span></span>
+<span id="cb43-23"><a href="#cb43-23" aria-hidden="true" tabindex="-1"></a>        } <span class="cf">else</span> {</span>
+<span id="cb43-24"><a href="#cb43-24" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="fu">wrap</span>()<span class="op">;</span></span>
+<span id="cb43-25"><a href="#cb43-25" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb43-26"><a href="#cb43-26" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb43-27"><a href="#cb43-27" aria-hidden="true" tabindex="-1"></a>    _ <span class="op">&lt;-</span> <span class="fu">forLoop</span>()<span class="op">;</span></span>
+<span id="cb43-28"><a href="#cb43-28" aria-hidden="true" tabindex="-1"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&quot;after loop&quot;</span>)<span class="op">;</span></span>
+<span id="cb43-29"><a href="#cb43-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">wrap</span>()<span class="op">;</span></span>
+<span id="cb43-30"><a href="#cb43-30" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb43-31"><a href="#cb43-31" aria-hidden="true" tabindex="-1"></a><span class="co">// step 2: transform `const variable &lt;- expr;`</span></span>
+<span id="cb43-32"><a href="#cb43-32" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">countUntilN</span>(n<span class="op">:</span> <span class="dt">number</span>)<span class="op">:</span> <span class="bu">Promise</span><span class="op">&lt;</span><span class="dt">void</span><span class="op">&gt;</span> {</span>
+<span id="cb43-33"><a href="#cb43-33" aria-hidden="true" tabindex="-1"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="vs">`starting with n = </span><span class="sc">${</span>n<span class="sc">}</span><span class="vs">`</span>)<span class="op">;</span></span>
+<span id="cb43-34"><a href="#cb43-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">andThen</span>(</span>
+<span id="cb43-35"><a href="#cb43-35" aria-hidden="true" tabindex="-1"></a>        <span class="fu">sleepMS</span>(<span class="dv">200</span>)<span class="op">,</span></span>
+<span id="cb43-36"><a href="#cb43-36" aria-hidden="true" tabindex="-1"></a>        _ <span class="kw">=&gt;</span> {</span>
+<span id="cb43-37"><a href="#cb43-37" aria-hidden="true" tabindex="-1"></a>            <span class="kw">function</span> <span class="fu">forLoop</span>(i <span class="op">=</span> <span class="dv">0</span> <span class="co">/* allows type inference */</span>) {</span>
+<span id="cb43-38"><a href="#cb43-38" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> (i <span class="op">&lt;</span> n) {</span>
+<span id="cb43-39"><a href="#cb43-39" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">return</span> <span class="fu">andThen</span>(</span>
+<span id="cb43-40"><a href="#cb43-40" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">sleepMS</span>(<span class="dv">200</span>)<span class="op">,</span></span>
+<span id="cb43-41"><a href="#cb43-41" aria-hidden="true" tabindex="-1"></a>                        _ <span class="kw">=&gt;</span> {</span>
+<span id="cb43-42"><a href="#cb43-42" aria-hidden="true" tabindex="-1"></a>                            <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="vs">`i = </span><span class="sc">${</span>i<span class="sc">}</span><span class="vs">`</span>)<span class="op">;</span></span>
+<span id="cb43-43"><a href="#cb43-43" aria-hidden="true" tabindex="-1"></a>                            i<span class="op">++;</span></span>
+<span id="cb43-44"><a href="#cb43-44" aria-hidden="true" tabindex="-1"></a>                            <span class="cf">return</span> <span class="fu">forLoop</span>(i)<span class="op">;</span></span>
+<span id="cb43-45"><a href="#cb43-45" aria-hidden="true" tabindex="-1"></a>                        }</span>
+<span id="cb43-46"><a href="#cb43-46" aria-hidden="true" tabindex="-1"></a>                    )<span class="op">;</span></span>
+<span id="cb43-47"><a href="#cb43-47" aria-hidden="true" tabindex="-1"></a>                } <span class="cf">else</span> {</span>
+<span id="cb43-48"><a href="#cb43-48" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">return</span> <span class="fu">wrap</span>()<span class="op">;</span></span>
+<span id="cb43-49"><a href="#cb43-49" aria-hidden="true" tabindex="-1"></a>                }</span>
+<span id="cb43-50"><a href="#cb43-50" aria-hidden="true" tabindex="-1"></a>            }</span>
+<span id="cb43-51"><a href="#cb43-51" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="fu">andThen</span>(</span>
+<span id="cb43-52"><a href="#cb43-52" aria-hidden="true" tabindex="-1"></a>                <span class="fu">forLoop</span>()<span class="op">,</span></span>
+<span id="cb43-53"><a href="#cb43-53" aria-hidden="true" tabindex="-1"></a>                _ <span class="kw">=&gt;</span> {</span>
+<span id="cb43-54"><a href="#cb43-54" aria-hidden="true" tabindex="-1"></a>                    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">&quot;after loop&quot;</span>)<span class="op">;</span></span>
+<span id="cb43-55"><a href="#cb43-55" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">return</span> <span class="fu">wrap</span>()<span class="op">;</span></span>
+<span id="cb43-56"><a href="#cb43-56" aria-hidden="true" tabindex="-1"></a>                }</span>
+<span id="cb43-57"><a href="#cb43-57" aria-hidden="true" tabindex="-1"></a>            )<span class="op">;</span></span>
+<span id="cb43-58"><a href="#cb43-58" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb43-59"><a href="#cb43-59" aria-hidden="true" tabindex="-1"></a>    )<span class="op">;</span></span>
+<span id="cb43-60"><a href="#cb43-60" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+            <section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+            <hr />
+            <ol>
+            <li id="fn1"><p><a href="https://byorgey.wordpress.com/2009/01/12/abstraction-intuition-and-the-monad-tutorial-fallacy/">Abstraction, intuition, and the “monad tutorial fallacy”</a><a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+            <li id="fn2"><p><a href="https://blog.plover.com/prog/burritos.html">Monads are like burritos</a><a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+            <li id="fn3"><p><a href="https://www.youtube.com/watch?v=J-HWmoTKhC8&amp;t=527s">Monadic Error Handling in Python</a><a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+            <li id="fn4"><p><a href="https://www.youtube.com/watch?v=srQt1NAHYC0&amp;t=1101s&amp;ab_channel=NDCConferences">Functional Design Patterns</a><a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+            <li id="fn5"><p><a href="http://james-iry.blogspot.com/2009/05/brief-incomplete-and-mostly-wrong.html">A Brief, Incomplete, and Mostly Wrong History of Programming Languages</a></p>
+            <p><a href="https://stackoverflow.com/questions/3870088/a-monad-is-just-a-monoid-in-the-category-of-endofunctors-whats-the-problem">Contexto adicional</a><a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+            <li id="fn6"><p><a href="https://wiki.haskell.org/Monad_laws">Monad laws</a><a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+            </ol>
+            </section>
+        </main>
+    </body>
+</html>

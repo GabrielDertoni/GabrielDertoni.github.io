@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-br" xml:lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Gabriel Dertoni" />
+  <meta name="keywords" content="haskell, functional" />
+  <title>Pensamentos Sobre Tipos Como Proposições</title>
+  <style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+</style>
+  <style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+div.sourceCode
+{ color: #ebdbb2; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span { color: #ebdbb2; } 
+code span.al { color: #282828; background-color: #cc241d; font-weight: bold; } 
+code span.an { color: #98971a; } 
+code span.at { color: #d79921; } 
+code span.bn { color: #f67400; } 
+code span.bu { color: #d65d0e; } 
+code span.cf { color: #cc241d; font-weight: bold; } 
+code span.ch { color: #b16286; } 
+code span.cn { color: #b16286; font-weight: bold; } 
+code span.co { color: #928374; } 
+code span.cv { color: #928374; } 
+code span.do { color: #98971a; } 
+code span.dt { color: #d79921; } 
+code span.dv { color: #f67400; } 
+code span.er { color: #cc241d; text-decoration: underline; } 
+code span.ex { color: #689d6a; font-weight: bold; } 
+code span.fl { color: #f67400; } 
+code span.fu { color: #689d6a; } 
+code span.im { color: #689d6a; } 
+code span.in { color: #282828; background-color: #83a598; } 
+code span.kw { color: #ebdbb2; font-weight: bold; } 
+code span.op { color: #ebdbb2; } 
+code span.ot { color: #689d6a; } 
+code span.pp { color: #d65d0e; } 
+code span.re { color: #928374; background-color: #1d2021; } 
+code span.sc { color: #b16286; } 
+code span.ss { color: #98971a; } 
+code span.st { color: #98971a; } 
+code span.va { color: #458588; } 
+code span.vs { color: #848216; } 
+code span.wa { color: #282828; background-color: #fabd2f; } 
+</style>
+  <style type="text/css">@import url('https://fonts.googleapis.com/css2?family=Fira+Code&family=Inter&display=swap')</style>
+  <style type="text/css">:root {
+--bg: #282828;
+--bg0-h: #1d2021;
+--bg0-s: #32302f;
+--bg0: #282828;
+--bg1: #3c3836;
+--bg2: #504945;
+--bg3: #665c54;
+--bg4: #7c6f64;
+--fg: #ebdbb2;
+--fg0: #fbf1c7;
+--fg1: #ebdbb2;
+--fg2: #d5c4a1;
+--fg3: #bdae93;
+--fg4: #a89984;
+--dark-red: #cc241d;
+--dark-green: #98971a;
+--dark-yellow: #d79921;
+--dark-orange: #d65d0e;
+--dark-blue: #458588;
+--dark-purple: #b16286;
+--dark-aqua: #689d6a;
+--dark-grey: #a89984;
+--light-red: #fb4934;
+--light-green: #b8bb26;
+--light-yellow: #fabd2f;
+--light-orange: #fe8019;
+--light-blue: #83a598;
+--light-purple: #d3869b;
+--light-aqua: #8ec07c;
+--light-grey: #928374;
+--top-bar-bg-color: var(--fg0);
+--top-bar-fg-color: var(--bg0-h);
+--nav-bar-link-color: var(--fg0);
+--nav-bar-link-hover-color: var(--light-orange);
+--main-text-color: var(--fg);
+--title-color: var(--light-aqua);
+--section-color: var(--light-blue);
+--link-color: var(--dark-blue);
+--link-hover-color: var(--light-blue);
+--inline-code-color: var(--light-orange);
+--inline-code-bg-color: var(--bg1);
+--code-bg-color: var(--bg1);
+--content-width: 800px;
+--keywords-color: var(--fg4);
+--article-list-bg-color: var(--bg1);
+--article-list-fg-color: var(--light-aqua);
+--author-color: var(--dark-aqua);
+}
+::-webkit-scrollbar-thumb {
+border-radius: 10px;
+
+background-color: #0f0f0f;
+}
+::-webkit-scrollbar {
+width: 12px;
+height: 12px;
+background-color: #282828;
+}
+::-webkit-scrollbar-track {
+-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+border-radius: 10px;
+background-color: #282828;
+}
+body {
+padding: 2em;
+font-size: 1rem;
+padding-top: 0;
+background-color: #282828;
+color: var(--main-text-color);
+font-family: 'Fira Code', monospace;
+font-variant-ligatures: normal;
+display: flex;
+flex-flow: column nowrap;
+align-items: center;
+}
+header {
+width: 100%;
+display: flex;
+flex-flow: column nowrap;
+align-items: center;
+}
+a {
+color: var(--link-color);
+transition: color ease-in 100ms;
+font-weight: 600;
+}
+a:hover {
+color: var(--link-hover-color);
+}
+h1 {
+color: var(--title-color);
+}
+h1.title {
+margin-bottom: .3em;
+}
+h1::after {
+content: '';
+display: block;
+width: 100%;
+border-bottom: solid 3px;
+}
+h2 {
+color: var(--section-color);
+}
+code {
+padding: 1px 6px;
+border-radius: 3px;
+color: var(--inline-code-color);
+background-color: var(--inline-code-bg-color);
+font-family: 'Fira Code';
+font-variant-ligatures: normal;
+}
+code:not(.sourceCode) {
+font-size: .8em;
+}
+pre code {
+padding: 0;
+border-radius: 0;
+color: var(--main-text-color);
+background-color: transparent;
+font-size: 1em;
+font-weight: normal;
+}
+pre.sourceCode {
+padding: 1em;
+background-color: var(--code-bg-color);
+border-radius: 5px;
+overflow: auto;
+font-size: .9em;
+}
+p {
+text-align: justify;
+}
+.text-underline {
+text-decoration: underline;
+}
+.text-ligatures {
+font-variant-ligatures: normal;
+}
+.text-hide {
+display: none;
+}
+.list-title {
+margin-bottom: 0;
+}
+.list-title ~ ul {
+margin-top: 0;
+}
+.width-content {
+width: var(--content-width);
+}
+.no-bottom-margin {
+margin-bottom: 0;
+}
+#top-bar {
+width: 100%;
+padding: .5em;
+background-color: var(--top-bar-bg-color);
+color: var(--top-bar-fg-color);
+display: flex;
+flex-flow: row nowrap;
+justify-content: center;
+}
+.blog-title {
+text-transform: uppercase;
+font-weight: bold;
+}
+#menu ul {
+padding: 0;
+display: flex;
+flex-flow: row nowrap;
+justify-content: flex-start;
+gap: 2rem;
+}
+#menu ul li {
+list-style: none;
+}
+#menu ul li a {
+color: var(--nav-bar-link-color);
+transition: color ease-in 100ms;
+}
+#menu ul li a:hover {
+color: var(--nav-bar-link-hover-color);
+}
+.keywords > ul {
+margin-top: 0;
+display: flex;
+flex-flow: row nowrap;
+gap: 1em;
+padding: 0;
+color: var(--keywords-color);
+}
+.keywords > ul > li {
+list-style: none;
+}
+.article-list > ul {
+display: flex;
+flex-flow: column nowrap;
+gap: 1em;
+padding: 0;
+}
+.article-list > ul > li {
+padding: 0 1em;
+background-color: var(--article-list-bg-color);
+list-style: none;
+}
+.article-list > ul > li a {
+font-variant-ligatures: normal;
+color: var(--article-list-fg-color);
+}
+.article-title {
+color: var(--title-color);
+}
+.article-title::after {
+content: '';
+display: block;
+width: 100%;
+border-bottom: solid 3px;
+}
+.author {
+color: var(--author-color);
+margin-top: .3em;
+}
+@media screen and (max-width: 1000px) {
+.width-content {
+width: calc(100% - 1rem);
+}
+body {
+padding: 0;
+font-size: .8rem;
+}
+}
+</style>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+</head>
+    <body>
+        <header>
+            <div id="top-bar">
+                <div class="width-content">
+                    <div class="blog-title">Gabriel Dertoni</div>
+                </div>
+            </div>
+            <nav class="width-content" id="menu">
+                <ul>
+                    <li><a href="/index.html">Index</a></li>
+                    <li><a href="/about.html">About</a></li>
+                </ul>
+            </nav>
+        </header>        <main class="width-content">
+            <div id="title-block-header">
+                <h1 class="title">Pensamentos Sobre Tipos Como Proposições</h1>
+                <div class="keywords">
+                    <ul>
+                                                <li>#haskell</li>
+                                                <li>#functional</li>
+                                            </ul>
+                </div>
+                <div class="authors">
+                    <!-- Puts "Escrito por" when `lang-pt` is set and "Authored by" when `lang-en` is set -->
+                    <p class="author"> Gabriel Dertoni</p>
+                </div>
+            </div>
+            <nav id="TOC">
+                <!-- Puts "Conteúdo" when `lang-pt` is set and "Contents" when `lang-en` is set -->
+                <p class="list-title text-underline">Conteúdo:</p>
+                <ul>
+                <li><a href="#introdução" id="toc-introdução">Introdução</a></li>
+                <li><a href="#uma-tangente-sobre-o-tipo-void" id="toc-uma-tangente-sobre-o-tipo-void">Uma tangente sobre o tipo <code>Void</code></a></li>
+                <li><a href="#de-volta-à-lógica-negação-e-igualdade" id="toc-de-volta-à-lógica-negação-e-igualdade">De volta à lógica, negação e igualdade</a></li>
+                <li><a href="#kinds" id="toc-kinds">Kinds</a></li>
+                <li><a href="#mais-algo-sobre-gadts" id="toc-mais-algo-sobre-gadts">Mais algo sobre <code>GADTs</code></a></li>
+                <li><a href="#um-pouco-de-prática" id="toc-um-pouco-de-prática">Um pouco de prática</a></li>
+                <li><a href="#recursos" id="toc-recursos">Recursos</a></li>
+                </ul>
+            </nav>
+            <h2 id="introdução">Introdução</h2>
+            <p>Uma coisa interessante que descobri sobre programação funcional é sobre a relação entre tipos e proposições matemáticas e entre programas e provas matemáticas. Essa relação é chamada de <em>Curry-Howard Isomorphism</em> aparentemente. Eu ainda estou começando a estudar sobre isso, mas o tópico já é imediatamente interessante! Posto de maneira simples, isso significa que uma função de um programa é, na verdade uma prova matemática sobre alguma coisa. Na realidade, isso não é verdade de maneira geral para todos os programas. Mas pelo menos para funções puras, isso é verdade.</p>
+            <p>Nesse modelo de pensar, os tipos se comportam como proposições e as definições como provas. Ou seja, se alguém te mostra que a assinatura de determinada função é</p>
+            <div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ot">aBool ::</span> <span class="dt">Bool</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>aBool <span class="ot">=</span> <span class="co">{- ... alguma coisa ... -}</span></span></code></pre></div>
+            <p>isso é uma prova de que a proposição <code>Bool</code> é “verdadeira”. Mas o que isso significa? Significa que é um tipo habitado. Isto é, existe um valor de tempo de execução para esse tipo. O valor é chamado de “habitante” do tipo. Isso pode parecer estranho, já que não estamos considerando qual dos habitantes do tipo (<code>True</code> ou <code>False</code>), somente estamos afirmando que “ele precisa ser habitado pelo simples fato de que alguém foi capaz de escrever essa implementação”. Nesse sentido, a implementação da função é a prova da proposição, desde que sejamos capazes de escrever essa implementação.</p>
+            <div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Aqui está uma prova possível</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>aBool <span class="ot">=</span> <span class="dt">False</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">-- Aqui está outra prova possível</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>aBool <span class="ot">=</span> <span class="dt">True</span></span></code></pre></div>
+            <p>Vendo dessa forma, funções atuam exatamente como “<span class="math inline">\(\rightarrow\)</span>” na matemática, ou seja, <code>a -&gt; b</code> significa que, providenciado um prova para <code>a</code>, é possível obter uma prova para <code>b</code>. Além disso, podem haver outras maneiras de provar <code>b</code>, independente de existir uma prova para <code>a</code>. Por exemplo</p>
+            <div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">PEqualsNP</span> <span class="ot">=</span> <span class="co">{- Só é possível instanciar se P = NP -}</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ot">ifThen ::</span> <span class="dt">PEqualsNP</span> <span class="ot">-&gt;</span> ()</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>ifThen p_equals_np <span class="ot">=</span> ()</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="ot">easierProof ::</span> ()</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>easierProof <span class="ot">=</span> ()</span></code></pre></div>
+            <p>nesse caso imaginei um tipo hipotético de algo muito difícil ou impossível provar, <span class="math inline">\(P = NP\)</span> e, a partir disso, podemos provar <code>()</code>. Mas também é possível provar <code>()</code> de outra forma muito mais fácil. Apesar disso, poderiam ter coisas mais interessantes, como</p>
+            <div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ot">optimize ::</span> (<span class="dt">PEqualsNP</span>, <span class="dt">SomeNPProblem</span>) <span class="ot">-&gt;</span> <span class="dt">PolynomialAlgorithm</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>optimize (p_equals_np, problem) <span class="ot">=</span> <span class="co">{- usa a prova de alguma forma -}</span></span></code></pre></div>
+            <p>ou seja, dado uma prova <span class="math inline">\(P = NP\)</span> e algum problema qualquer dentro da classe <span class="math inline">\(NP\)</span> seria possível gerar um algoritmo que resolve o problema em tempo polinomial. Aqui já é possível verificar ainda outra forma de combinar provas, com tuplas! De fato, a prova de <span class="math inline">\(A \land B\)</span> é representada por <code>(A, B)</code>. Similarmente, a prova de <span class="math inline">\(A \lor B\)</span> é representada por <code>Either A B</code>. Isso é bem natural, já que <code>(,)</code> é a essência do tipo produto e <code>Either</code> a essência do tipo soma.</p>
+            <p>A partir disso, podemos definir algumas coisas para deixar nossa programação mais parecida com a matemática sintaticamente</p>
+            <div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> a <span class="op">/</span>\ b <span class="ot">=</span> (a, b)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> a \<span class="op">/</span> b <span class="ot">=</span> <span class="dt">Either</span> a b</span></code></pre></div>
+            <p>Como vimos anteriormente, para provar que algo é verdadeiro, precisamos ser capazes de escrever a definição da função. Nesse sentido, a proposição mais fácil de provar seria justamente <code>()</code>, já que possui um único habitante (valor possível). Também é possível definir uma função única</p>
+            <div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ot">constUnit ::</span> <span class="kw">forall</span> a<span class="op">.</span> a <span class="ot">-&gt;</span> ()</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>constUnit _ <span class="ot">=</span> ()</span></code></pre></div>
+            <p>Ou seja, <code>()</code> de certa forma representa a “essência” do que é verdadeiro já que para qualquer tipo <code>A</code> habitado, ao obter um habitante do tipo <code>a :: A</code> podemos simplesmente usar <code>constUnit a</code> para obter <code>()</code>. Isso é interessante pois de fato existe um oposto ao tipo <code>()</code>, o tipo <code>Void</code>.</p>
+            <h2 id="uma-tangente-sobre-o-tipo-void">Uma tangente sobre o tipo <code>Void</code></h2>
+            <p>Apesar desse nome “void” ser usado em muitas linguagens de programação imperativas, ele geralmente representa o tipo unitário <code>()</code>. Isso é bem contraintuitivo pois nessas linguagens <code>void</code> significa que a função não retorna valor. Mas isso é uma completa mentira. É claro que retorna! Ela retorna o único habitante do tipo <code>void</code>. Por exemplo, por um momento esqueça todos os efeitos colaterais da linguagem C. Qual a diferença entre essas duas funções?</p>
+            <div class="sourceCode" id="cb7"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">typedef</span> <span class="kw">struct</span> <span class="op">{}</span> unit_t<span class="op">;</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>uinit_t f<span class="op">()</span> <span class="op">{</span> <span class="cf">return</span> <span class="op">(</span>unit_t<span class="op">){};</span> <span class="op">}</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span>    g<span class="op">()</span> <span class="op">{</span> <span class="cf">return</span><span class="op">;</span>            <span class="op">}</span></span></code></pre></div>
+            <p>Uma delas retorna <code>unit_t</code> e a outra <code>void</code>. Existe somente uma forma de construir <code>unit_t</code> uma vez que é um struct vazio que possui <code>0</code> bytes de tamanho (ao menos conceitualmente). Similarmente, existe uma única forma de retornar da função <code>g</code>. O confuso é que em C, por qualquer motivo, as coisas são estranhas</p>
+            <div class="sourceCode" id="cb8"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>unit_t var_f <span class="op">=</span> f<span class="op">();</span> <span class="co">// Ok</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span>   var_g <span class="op">=</span> g<span class="op">();</span> <span class="co">// Erro de compilação</span></span></code></pre></div>
+            <p>apesar disso, não é difícil perceber que <code>f</code> e <code>g</code> são completamente equivalentes (isomórficas) e absolutamente qualquer função que retorna <code>void</code> poderia ser refatorada para retornar <code>unit_t</code> e vice-versa, sem qualquer perda, uma vez que é impossível diferenciar duas instâncias de <code>unit_t</code> assim como é impossível diferenciar dois <code>void</code>s.</p>
+            <blockquote>
+            <p>[!NOTE] Aparentemente o <em>standard</em> do C não permite tipos com tamanho <code>0</code>, mas o argumento ainda é válido! Mas esse fato dá sentido ao fato do tipo <code>void</code> não poder ser guardado numa variável.</p>
+            </blockquote>
+            <p>Depois da imensa e absoluta popularização e adoção do C, muitas das linguagens que seguiram a mesma linha (como Java e C#) copiaram essa noção de <code>void</code>. Apesar disso, linguagens interpretadas, como Python ou Javascript possuem sim tipos unitários que podem ser armazenados em variáveis. Isso porque é possível escrever algo como</p>
+            <div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>v <span class="op">=</span> f()</span></code></pre></div>
+            <p>que declara a variável <code>f</code> e portanto ela precisa ter um valor. No Python esse valor é o <code>None</code> e no Javascript é o <code>undefined</code>. Além disso, linguagens mais modernas como Rust ou Zig possuem tipos unitários, <code>()</code> e <code>void</code> respectivamente. Mas o <code>void</code> do Zig é realmente um tipo unitário que você pode armazenar em uma variável ou numa lista e não a estranhisse que é em C.</p>
+            <p>Mas o <code>Void</code> a que estou me referindo não é nenhum desses valores, na verdade muito pelo contrário! Quando falamos do tipo <code>Void</code> em programação funcional estamos nos referindo a um tipo que não pode ser construído. Ou seja, ele é um tipo inabitado. Esse tipo que justamente não pode ser manipulado em tempo de execução é na realidade muito útil e usado em algumas linguagens de programação fora do espectro funcional. Por exemplo, Zig e Rust chamam esse tipo <code>noreturn</code> e <code>never</code> (ou <code>!</code>) respectivamente. Ele é um tipo muito útil principalmente para linguagens baseadas em expressões. Em haskell e outras linguagens funcionais esse tipo se chama <code>Void</code> e é definido assim</p>
+            <div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Void</span></span></code></pre></div>
+            <p>Repare que não há <code>=</code> após a definição do tipo já que ele não possui construtores. Esse tipo que não possui habitantes é a representação do falso. Provar algo falso é impossível e equivalente a construir o tipo <code>Void</code> (que também é impossível). Esse tipo possui algumas propriedades interessantes:</p>
+            <ul>
+            <li><code>Void /\ ()</code> não possui habitantes, equivalente a <span class="math inline">\(False \land True = False\)</span></li>
+            <li><code>Void \/ ()</code> possui exatamente um habitante, equivalente a <span class="math inline">\(False \lor True = True\)</span></li>
+            </ul>
+            <p>Além disso, a partir de algo falso, é possível provar qualquer coisa (<em>ex falso quodlibet</em>, do Latim, “a partir da falsidade, qualquer coisa”)</p>
+            <div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ot">absurd ::</span> <span class="dt">Void</span> <span class="ot">-&gt;</span> a</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>absurd unobtainable <span class="ot">=</span> <span class="fu">undefined</span> <span class="co">{- impossível chegar aqui -}</span></span></code></pre></div>
+            <p>Essa propriedade é bastante usada em Rust por exemplo, vejamos um exemplo de código</p>
+            <div class="sourceCode" id="cb12"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> f(b<span class="op">:</span> <span class="dt">bool</span>) <span class="op">-&gt;</span> <span class="dt">Result</span><span class="op">&lt;</span>()<span class="op">,</span> <span class="dt">char</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> unit <span class="op">=</span> <span class="cf">match</span> b <span class="op">{</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>        <span class="cn">true</span> <span class="op">=&gt;</span> ()<span class="op">,</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>        <span class="cn">false</span> <span class="op">=&gt;</span> <span class="cf">return</span> <span class="cn">Err</span>(<span class="ch">&#39;a&#39;</span>)<span class="op">,</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">};</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    <span class="cn">Ok</span>(unit)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+            <p>de maneira geral todos os casos do <code>match</code> precisam possuir o mesmo tipo. De fato, se eu remover o <code>return</code> dali, vai dar erro de compilação já que <code>true =&gt; ()</code> possui tipo <code>()</code> e daí <code>false =&gt; Err(&#39;a&#39;)</code> possuiria tipo <code>Result&lt;_, char&gt;</code>. Entretanto ao invés disso tem um <code>return</code> que faz com que o fluxo de controle saia da função inteira. Portanto, o tipo da expressão <code>return Err(&#39;a&#39;);</code> é o nosso tipo <code>Void</code> que em Rust se chama <code>!</code> ou <code>never</code>. Nesse caso ele fez uma conversão implícita de <code>!</code> para <code>()</code>. Keywords como <code>continue</code> e <code>break</code> possuem o mesmo comportamento. Para deixar isso ainda mais óbvio, podemos usar uma feature flag <code>never_type</code> (já que essa feature está no nightly atualmente) para poder escrever o tipo <code>!</code> explicitamente</p>
+            <div class="sourceCode" id="cb13"><pre class="sourceCode rust"><code class="sourceCode rust"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="at">#![</span>feature<span class="at">(</span>never_type<span class="at">)]</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="kw">fn</span> g<span class="op">&lt;</span>A<span class="op">&gt;</span>() <span class="op">-&gt;</span> <span class="dt">Result</span><span class="op">&lt;</span>A<span class="op">,</span> ()<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> impossible<span class="op">:</span> <span class="op">!</span> <span class="op">=</span> <span class="cf">return</span> <span class="cn">Err</span>(())<span class="op">;</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> anything<span class="op">:</span> A <span class="op">=</span> impossible<span class="op">;</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="cn">Ok</span>(anything)<span class="op">;</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+            <p>o compilador vai gritar um monte de warning (esse código é bem estúpido), mas nenhum erro. O compilador vai simplesmente usar essa função <code>absurd</code> implicitamente (conceitualmente) para transformar algo do tipo <code>!</code> em algo de qualquer tipo.</p>
+            <h2 id="de-volta-à-lógica-negação-e-igualdade">De volta à lógica, negação e igualdade</h2>
+            <p>Ainda mais interessante, é possível definir negação lógica como</p>
+            <div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Not</span> a <span class="ot">=</span> a <span class="ot">-&gt;</span> <span class="dt">Void</span></span></code></pre></div>
+            <p>Ou seja, dado uma prova de <code>a</code> é possível chegar em <code>Void</code>, portanto <code>a</code> precisa ser falso.</p>
+            <p>Para provar que <code>a = b</code> vamos precisar usar uma extenção do Haskell chamada “GADT”, que significa <em>Generic Algebraic Data Type</em> e nos permite definir tipos de maneira mais específica, permitindo os construtores de um tipo possuírem genéricos mais restritos que o todo. É meio difícil explicar, melhor mostrar!</p>
+            <div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Equal</span> a b <span class="kw">where</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Refl</span><span class="ot"> ::</span> <span class="dt">Equal</span> a a</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> a <span class="op">:~:</span> b <span class="ot">=</span> <span class="dt">Equal</span> a b</span></code></pre></div>
+            <p>aqui o tipo se chama <code>Equal</code> e possui dois tipos genéricos <code>a</code> e <code>b</code>. Além disso ele possui somente um construtor, <code>Refl</code> (o nome vem de “reflection”). Só que o tipo do construtor <code>Refl</code> é na verdade <code>Equal a a</code>. Uma coisa importante de notar é que a variável de tipo <code>a</code> usada na linha do <code>data Equal a a where</code> <strong>não é a mesma</strong> da que é usada na linha <code>Refl :: Equal a a</code>. Na realidade são variáveis distintas e poderiam ter nomes distintos (mas sempre é definido dessa forma, por isso fiz igual). Isso me confundiu muito inicialmente! Basicamente o poder do tipo <code>Equal</code> é que só podemos construir ele se de fato os dois tipos genéricos forem iguais. Por exemplo</p>
+            <div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ot">simpleEquality ::</span> () <span class="op">:~:</span> () <span class="co">-- Equivalente a `Equal () ()`</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>simpleEquality <span class="ot">=</span> <span class="dt">Refl</span> <span class="co">-- Temos que de fato () = () e portanto isso é OK</span></span></code></pre></div>
+            <p>Em Haskell a igualdade de tipos é representada por <code>~</code> e é como se fosse uma typeclass, só que ela é <em>builtin</em>. Quando aparece um <code>a ~ b</code> no código é uma <em>constraint</em> indicando que o tipo <code>a = b</code>. Isso é muito usado no <em>typechecker</em> já que ele precisa constantemente testar se os tipos são iguais ou não. Portanto, quando fazemos algo como</p>
+            <div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ot">notEqual ::</span> () <span class="op">:~:</span> <span class="dt">Void</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>notEqual <span class="ot">=</span> <span class="dt">Refl</span> <span class="co">-- Único construtor que podemos usar</span></span></code></pre></div>
+            <p>o compilador reclama que</p>
+            <div class="sourceCode" id="cb18"><pre class="sourceCode txt"><code class="sourceCode default"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>• Couldn&#39;t match type ‘()’ with ‘Void’</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>      Expected: () :~: Void</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>        Actual: () :~: ()</span></code></pre></div>
+            <p>Ou seja, podemos escrever o tipo <code>() :~: Void</code> sem nenhum problema, mas não será possível construir um habitante desse tipo, já que o construtor requer que ambos os tipos genéricos sejam o mesmo. Nesse caso, o compilador tentou resolver a <code>() ~ Void</code> e não conseguiu encontrar solução e por isso ele acusa o erro.</p>
+            <p>Outra coisa importante é que quando temos uma função que usa <code>a :~: b</code> como parâmetro e fazemos pattern match com <code>Refl</code> o compilador anota que <code>a ~ b</code> uma vez que é a única forma daquele construtor ter sido criado. Com isso, podemos definir algumas operações com igualdade.</p>
+            <div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Propriedade simétrica da igualdade</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- forall a b, a = b &lt;-&gt; b = a</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="ot">sym ::</span> <span class="kw">forall</span> a b<span class="op">.</span> (a <span class="op">:~:</span> b) <span class="ot">-&gt;</span> (b <span class="op">:~:</span> a)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>sym <span class="dt">Refl</span> <span class="ot">=</span> <span class="dt">Refl</span> <span class="co">-- Como `a ~ b`, podemos usar um no lugar do outro</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co">--  ^^^^~~~ pattern match faz compilador perceber que `a ~ b`</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="co">--</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="co">-- Note que `sym proof = Refl` não funcionaria já que não demos match</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="co">-- no construtor, o compilador não consegue concluir `a ~ b`</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="co">-- Propriedade transitiva da igualdade</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="co">-- forall a b c, (a = b /\ b = c) -&gt; a = c</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="ot">trans ::</span> <span class="kw">forall</span> a b c<span class="op">.</span> (a <span class="op">:~:</span> b) <span class="ot">-&gt;</span> (b <span class="op">:~:</span> c) <span class="ot">-&gt;</span> (a <span class="op">:~:</span> c)</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>trans <span class="dt">Refl</span> <span class="dt">Refl</span> <span class="ot">=</span> <span class="dt">Refl</span></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a><span class="co">-- forall a b, (a = b /\ a) -&gt; b</span></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="ot">castWith ::</span> <span class="kw">forall</span> a b<span class="op">.</span> (a <span class="op">:~:</span> b) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>castWith <span class="dt">Refl</span> <span class="ot">=</span> <span class="fu">id</span> <span class="co">-- Podemos usar a função identidade, já que aqui</span></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>                   <span class="co">-- o compilador sabe que `a ~ b`.</span></span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a><span class="ot">apply ::</span> <span class="kw">forall</span> f g a b<span class="op">.</span> (f <span class="op">:~:</span> g) <span class="ot">-&gt;</span> (a <span class="op">:~:</span> b) <span class="ot">-&gt;</span> (f a <span class="op">:~:</span> g b)</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>apply <span class="dt">Refl</span> <span class="dt">Refl</span> <span class="ot">=</span> <span class="dt">Refl</span></span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a><span class="co">-- Um exemplo de como essas funções podem ser combinadas para criar</span></span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a><span class="co">-- novas provas. Poderia ser definido de maneira mais simples também.</span></span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a><span class="ot">replace ::</span> <span class="kw">forall</span> a b f<span class="op">.</span> (a <span class="op">:~:</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>replace proof fa <span class="ot">=</span> castWith (apply <span class="dt">Refl</span> proof) fa</span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a><span class="co">--                 f a :~: f a ~~~~^^^^ ^^^^^~~~ a :~: b </span></span></code></pre></div>
+            <h2 id="kinds">Kinds</h2>
+            <p>Para entender o código que vamos escrever mais à frente, é necessario ainda falar sobre o conceito de <em>kind</em>. Assim como valores em haskell possuem tipos, os tipos possuem <em>kinds</em>. Vou escrever em inglês mesmo já que a tradução de “kind” seria “tipo” e acho que já deu pra entender o problema. Por curiosidade, o que está acima dos <em>kinds</em> é o <em>sort</em> (que também seria traduzido para “tipo”), mas Haskell para aí, não há nada acima dos <em>sorts</em> e só existe um sort chamado <code>BOX</code> mas ninguém liga pra ele (nem tem como se referir a ele na linguagem). Em linguagens com suporte completo a tipos dependentes, como Idris ou Agda, isso vai ao infinito! De qualquer maneira, o <em>kind</em> é o tipo do tipo. Pode parecer meio assustador, mas na verdade você já viu vários <em>kinds</em> só nesse texto! Por exemplo, numa função de <code>Char -&gt; Bool</code> por exemplo, usamos essa setinha “<code>-&gt;</code>” para separar o tipo do argumento do tipo de retorno, ela possui kind</p>
+            <div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Isso é uma anotaçào de kind</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span><span class="ot"> (-&gt;) ::</span> <span class="dt">Type</span> <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="ot">-&gt;</span> <span class="dt">Type</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="co">--                ^^~~~ sim, outra &quot;-&gt;&quot;, mas não é a mesma, isso é um</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="co">--                      construtor de kind</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="co">-- Ou seja, o kind de &quot;-&gt;&quot; é algo que toma dois tipos como argumento</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="co">-- e retorna outro tipo</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="co">-- O kind do `Either` é o mesmo da &quot;-&gt;&quot;, mas assim como o mesmo tipo</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="co">-- pode possuir valores completamente distintos, o mesmo kind pode</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="co">-- possuir tipos muito diferentes.</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Either</span><span class="ot"> ::</span> <span class="dt">Type</span> <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="ot">-&gt;</span> <span class="dt">Type</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="co">-- Typeclasses também possuem kinds! Entretanto, ao invés de &quot;retornar&quot;</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="co">-- um tipo, ele &quot;retorna&quot; uma `Constraint`.</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Num</span><span class="ot"> ::</span> <span class="dt">Type</span> <span class="ot">-&gt;</span> <span class="dt">Constraint</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Int</span><span class="ot"> ::</span> <span class="dt">Type</span> <span class="co">-- O kind do `Int` é simplesmente um tipo</span></span></code></pre></div>
+            <p>Esse tipo de coisa você consegue ver no <code>ghci</code> com <code>:info (-&gt;)</code>, ou simplesmente <code>:i (-&gt;)</code>. Para ficar mais legível eu recomendo rodar o comando <code>:set -XNoStarIsType</code> e <code>:set -fprint-explicit-foralls</code> (mais útil ainda quando usando <code>TypeApplications</code>). Para ver só o <em>kind</em> de algo, sem informações extras no <code>ghci</code>, existe o comando <code>:kind (-&gt;)</code> e equivalentemente <code>:k (-&gt;)</code> para isso.</p>
+            <h2 id="mais-algo-sobre-gadts">Mais algo sobre <code>GADTs</code></h2>
+            <p>Uma outra coisa que me custou pra entender na sintaxe dos GADTs é que quando queremos um GADT que guarda algum dado dentro dele, usamos uma sintaxe peculiar. Ela faz bastante sentido depois que você se acostuma, mas inicialmente me foi muito confuso.</p>
+            <div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">List</span> a <span class="kw">where</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Nil</span><span class="ot">  ::</span> <span class="dt">List</span> a</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Cons</span><span class="ot"> ::</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="co">-- Exatamente equivalente à seguinte definição sem a sintaxe dos GADTs</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="co">-- data List a = Nil | Cons a (List a)</span></span></code></pre></div>
+            <p>a setinha ali na linha <code>Cons :: a -&gt; List a -&gt; List a</code> na realidade indica que dentro do construtor <code>Cons</code> serão armazenados duas coisas, uma do tipo <code>a</code> e outra do tipo <code>List a</code>. De fato, o construtor <code>Cons</code> terá esse tipo se inspecionado <code>:t Cons</code> no <code>ghci</code>. Mas para mim foi meio contraintuitivo pensar nessa sintaxe de função na definição do construtor. Tudo que importa aqui é que o construtor <code>Cons</code> vai armazenar essas duas coisas dentro e nessa ordem. Se estivermos fazendo pattern match no cons usamos <code>Cons head tail</code> e então os tipos serão <code>head :: a</code> e <code>tail :: List a</code>.</p>
+            <h2 id="um-pouco-de-prática">Um pouco de prática</h2>
+            <p>Ok, chega de teoria, vamos tentar provar algo com isso! Aplicar esse conceito em programas reais envolve criar tipos que encapsulam mais informações sobre as propriedades que eles possuem. Um exemplo é o tipo <code>NonEmpty</code> do Haskell que representa uma lista não vazia. Obter um habitante do tipo <code>NonEmpty</code> é uma prova de que a lista é não vazia. De qualquer maneira, vamos tentar provar algo um pouco mais interessante, que</p>
+            <p><span class="math display">\[\forall n \in \mathbb{N},\, \neg (n + 1 = 0)\]</span></p>
+            <p>ou seja, que <span class="math inline">\(n + 1 \neq 0\)</span>.</p>
+            <div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE GADTs, DataKinds #-}</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Data.Kind</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Void</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Not</span> a  <span class="ot">=</span> a <span class="ot">-&gt;</span> <span class="dt">Void</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="co">-- Representação dos números naturais</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="co">-- A extenção `DataKinds` nos permite usar `Nat` também no nível de kind.</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="co">-- Dessa forma, os construtores `Z` e `S` possuem kind `Nat`.</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Nat</span> <span class="ot">=</span> <span class="dt">Z</span> <span class="op">|</span> <span class="dt">S</span> <span class="dt">Nat</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> a <span class="op">:~:</span> b <span class="kw">where</span></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Refl</span><span class="ot"> ::</span> a <span class="op">:~:</span> a</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a><span class="co">-- se a = b, então f a = f b, portanto dado f a podemos</span></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a><span class="co">-- obter um f b (já que são iguais)</span></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a><span class="ot">replace ::</span> <span class="kw">forall</span> k (<span class="ot">a ::</span> k) (<span class="ot">b ::</span> k) (<span class="ot">f ::</span> k <span class="ot">-&gt;</span> <span class="dt">Type</span>)<span class="op">.</span></span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>           a <span class="op">:~:</span> b <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>replace <span class="dt">Refl</span> <span class="ot">=</span> <span class="fu">id</span></span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">F</span><span class="ot"> ::</span> <span class="dt">Nat</span> <span class="ot">-&gt;</span> <span class="dt">Type</span></span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">F</span> a <span class="kw">where</span></span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- Construímos esse cara aqui, mas como temos uma prova</span></span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- que `Z ~ S n`, podemos provar que `F Z ~ F (S n)` e</span></span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- assim obter o outro construtor.</span></span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a>    <span class="dt">CaseZ</span><span class="ot"> ::</span> ()   <span class="ot">-&gt;</span> <span class="dt">F</span> <span class="dt">Z</span></span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>    <span class="co">-- Não dá pra construir esse tipo diretamente</span></span>
+<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a>    <span class="dt">CaseS</span><span class="ot"> ::</span> <span class="dt">Void</span> <span class="ot">-&gt;</span> <span class="dt">F</span> (<span class="dt">S</span> n)</span>
+<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a><span class="ot">succ_neq_z ::</span> <span class="kw">forall</span> (<span class="ot">n ::</span> <span class="dt">Nat</span>)<span class="op">.</span> <span class="dt">Not</span> (<span class="dt">Z</span> <span class="op">:~:</span> <span class="dt">S</span> n)</span>
+<span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a>succ_neq_z proof <span class="ot">=</span> <span class="kw">case</span> replace proof (<span class="dt">CaseZ</span> ()) <span class="kw">of</span></span>
+<span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">CaseS</span> void <span class="ot">-&gt;</span> void</span>
+<span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a>                     <span class="co">-- Não há mais casos para testar uma vez que o</span></span>
+<span id="cb22-36"><a href="#cb22-36" aria-hidden="true" tabindex="-1"></a>                     <span class="co">-- compilador sabe que o tipo aqui é `F (S n)`</span></span>
+<span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a>                     <span class="co">-- e portanto o único construtor possível é</span></span>
+<span id="cb22-38"><a href="#cb22-38" aria-hidden="true" tabindex="-1"></a>                     <span class="co">-- `CaseS`.</span></span></code></pre></div>
+            <p>Na realidade, usando o tipo <code>Nat</code> builtin do GHC, é possível escrever esse código de maneira bem mais legível e concisa. Aqui está o programa inteiro</p>
+            <div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE GADTs, DataKinds, TypeFamilies, TypeApplications #-}</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">GHC.TypeLits</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Data.Kind</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Data.Type.Equality</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Data.Void</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Not</span> a  <span class="ot">=</span> a <span class="ot">-&gt;</span> <span class="dt">Void</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">F</span><span class="ot"> ::</span> <span class="dt">Nat</span> <span class="ot">-&gt;</span> <span class="dt">Type</span></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">F</span> a <span class="kw">where</span></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">CaseZ</span><span class="ot"> ::</span> ()   <span class="ot">-&gt;</span> <span class="dt">F</span> <span class="dv">0</span></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">CaseS</span><span class="ot"> ::</span> <span class="dt">Void</span> <span class="ot">-&gt;</span> <span class="dt">F</span> (n <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a><span class="ot">succ_neq_z ::</span> <span class="kw">forall</span> (<span class="ot">n ::</span> <span class="dt">Nat</span>)<span class="op">.</span> <span class="dt">Not</span> (<span class="dv">0</span> <span class="op">:~:</span> n <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>succ_neq_z proof <span class="ot">=</span> <span class="kw">case</span> castWith (apply <span class="dt">Refl</span> proof) (<span class="dt">CaseZ</span> ()) <span class="kw">of</span></span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>                     <span class="dt">CaseS</span> void <span class="ot">-&gt;</span> void</span></code></pre></div>
+            <p>O mais legal disso é que não precisamos rodar o programa. Se ele compila, já é prova de que, de fato <span class="math inline">\(\forall n \in \mathbb{N},\, 0 \neq n + 1\)</span>.</p>
+            <h2 id="recursos">Recursos</h2>
+            <ul>
+            <li><a href="https://www.youtube.com/watch?v=IOiZatlZtGU&amp;t=2037s">Palestra “Propostitions as Types” da Strange Loop, 2015</a></li>
+            <li><a href="https://ivanbakel.github.io/posts/intuitionistic-logic-in-haskell/#:~:text=Intuitionistic%20logic%20is%20precisely%20what,have%20no%20equivalent%20intuitionistic%20proof.">Blog post “Intuitionistic logic in Haskell”</a></li>
+            <li><a href="https://en.wikibooks.org/wiki/Haskell/The_Curry%E2%80%93Howard_isomorphism">Haskell wiki “The Curry-Howard isomorphism”</a></li>
+            <li><a href="https://haskell.pesquisa.ufabc.edu.br/desenvolvimento-orientado-a-tipos/">Curso da UFABC “Desenvolvimento Orientado a Tipos”</a></li>
+            </ul>
+        </main>
+    </body>
+</html>
